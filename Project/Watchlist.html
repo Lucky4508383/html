@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Universal Watchlist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #ed1c24;
+            /* Trakt Red */
+            --primary-hover: #c9161d;
+            --bg-body: #141519;
+            --bg-navbar: #111111;
+            --bg-card: #1b1d22;
+            --text-main: #f0f0f0;
+            --text-muted: #8b929e;
+            --border-color: #272a33;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: var(--bg-navbar);
+            border-bottom: 1px solid #111;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+            height: 64px;
+            gap: 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-color: var(--primary);
+            border-radius: 4px;
+            mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 22h20L12 2z"/></svg>') center/contain no-repeat;
+            -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L1 21h22L12 3z"/></svg>') center/contain no-repeat;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #ccc;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            padding: 0 5px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        .nav-link.active {
+            color: white;
+            border-bottom-color: var(--primary);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .page-header {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+        }
+
+        /* Stats Chart Container */
+        .stats-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .stats-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 180px;
+        }
+
+        /* Dashboard Rows */
+        .category-row {
+            margin-bottom: 50px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 30px;
+        }
+
+        .category-row:first-of-type {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .category-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+
+        .category-header h3::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background-color: var(--primary);
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+
+        .count-badge {
+            background: #272a33;
+            color: #ccc;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        /* Results Grid */
+        .poster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            min-height: 250px;
+        }
+
+        @media (min-width: 1200px) {
+            .poster-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+
+        .poster-card {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .poster-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+
+        .poster-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        /* Hover Overlay */
+        .poster-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 20px 15px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .poster-wrapper:hover .poster-overlay {
+            opacity: 1;
+        }
+
+        .poster-wrapper:hover .poster-image {
+            transform: scale(1.05);
+        }
+
+        .overlay-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px top 50%;
+            background-size: 8px auto;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .overlay-select option {
+            background: #111;
+        }
+
+        .overlay-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.15);
+        }
+
+        .platform-tag {
+            background: #111;
+            border: 1px solid #333;
+            color: #ddd;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            pointer-events: none;
+        }
+
+        .delete-btn-wide {
+            background: transparent;
+            color: #ff4d4f;
+            border: 1px solid rgba(255, 77, 79, 0.4);
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .delete-btn-wide:hover {
+            background: rgba(255, 77, 79, 0.15);
+            border-color: #ff4d4f;
+        }
+
+        .poster-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .poster-title {
+            font-size: 1rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: white;
+        }
+
+        .poster-year {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            to {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .navbar {
+                padding: 0 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .poster-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+
+            .header-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="search.html" class="brand">Watchlist</a>
+        <div class="nav-links">
+            <a href="search.html" class="nav-link">Search</a>
+            <a href="watchlist.html" class="nav-link active">Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header-section">
+            <h2 class="page-header">My Dashboard</h2>
+            <div class="stats-container">
+                <div class="stats-title">Progress Overview</div>
+                <div class="chart-wrapper">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="category-row">
+            <div class="category-header">
+                <h3>Watching</h3>
+                <span class="count-badge" id="count-Watching">0</span>
+            </div>
+            <div class="poster-grid" id="list-Watching">
+                <div class="empty-state">No items yet</div>
+            </div>
+        </div>
+
+        <div class="category-row">
+            <div class="category-header">
+                <h3>Plan to Watch</h3>
+                <span class="count-badge" id="count-plan-to-watch">0</span>
+            </div>
+            <div class="poster-grid" id="list-plan-to-watch">
+                <div class="empty-state">No items yet</div>
+            </div>
+        </div>
+
+        <div class="category-row">
+            <div class="category-header">
+                <h3>On Hold</h3>
+                <span class="count-badge" id="count-on-hold">0</span>
+            </div>
+            <div class="poster-grid" id="list-on-hold">
+                <div class="empty-state">No items yet</div>
+            </div>
+        </div>
+
+        <div class="category-row">
+            <div class="category-header">
+                <h3>Watched</h3>
+                <span class="count-badge" id="count-watched">0</span>
+            </div>
+            <div class="poster-grid" id="list-watched">
+                <div class="empty-state">No items yet</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let progressChart = null;
+
+        document.addEventListener('DOMContentLoaded', loadData);
+
+        function initChart(counts, labels) {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+
+            progressChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels || ['Watching: 0', 'Plan to Watch: 0', 'On Hold: 0', 'Watched: 0'],
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: [
+                            '#3b82f6', // Blue for Watching
+                            '#8b929e', // Muted for Plan to watch
+                            '#f59e0b', // Orange for On Hold
+                            '#ed1c24'  // Trakt red for Watched (achievement)
+                        ],
+                        borderColor: '#1b1d22',
+                        borderWidth: 4,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: 10
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#e2e8f0',
+                                font: { family: 'Inter', size: 12 },
+                                boxWidth: 12,
+                                padding: 15,
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        const originalLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                        const sum = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                        originalLabels.push({
+                                            text: `Grand Total: ${sum}`,
+                                            fillStyle: 'transparent',
+                                            strokeStyle: 'transparent',
+                                            lineWidth: 0,
+                                            hidden: false,
+                                            index: 99
+                                        });
+                                        return originalLabels;
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleFont: { family: 'Inter' },
+                            bodyFont: { family: 'Inter', size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const baseLabel = context.label.split(':')[0];
+                                    return ` ${baseLabel}: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart(counts) {
+            const total = counts.reduce((a, b) => a + b, 0);
+            const dataCounts = total === 0 ? [0, 0, 0, 0] : counts;
+            const updatedLabels = [
+                `Watching: ${dataCounts[0]}`,
+                `Plan to Watch: ${dataCounts[1]}`,
+                `On Hold: ${dataCounts[2]}`,
+                `Watched: ${dataCounts[3]}`
+            ];
+
+            if (progressChart) {
+                progressChart.data.datasets[0].data = dataCounts;
+                progressChart.data.labels = updatedLabels;
+                progressChart.update();
+            } else {
+                initChart(dataCounts, updatedLabels);
+            }
+        }
+
+        function renderItem(item) {
+            let statusListId = `list-${item.status}`;
+            if (item.status === 'watching') statusListId = 'list-Watching';
+
+            const listContainer = document.getElementById(statusListId);
+            if (!listContainer) return;
+
+            const emptyState = listContainer.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const card = document.createElement('div');
+            card.className = 'poster-card';
+            card.setAttribute('data-id', item.id);
+
+            const yearHtml = item.year ? item.year : 'N/A';
+            const imageSrc = item.image || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
+            const cleanTitle = item.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+            card.innerHTML = `
+            <div class="poster-wrapper">
+                <img src="${imageSrc}" class="poster-image" alt="${cleanTitle}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4='">
+                <div class="platform-tag">${item.platform}</div>
+                <div class="poster-overlay">
+                    <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+                        <select class="overlay-select" onchange="updateItem(${item.id}, 'platform', this.value)">
+                            <option value="Netflix" ${item.platform === 'Netflix' ? 'selected' : ''}>Netflix</option>
+                            <option value="Prime Video" ${item.platform === 'Prime Video' ? 'selected' : ''}>Prime Video</option>
+                            <option value="Disney+" ${item.platform === 'Disney+' ? 'selected' : ''}>Disney+</option>
+                            <option value="Crunchyroll" ${item.platform === 'Crunchyroll' ? 'selected' : ''}>Crunchyroll</option>
+                            <option value="Rakuten Viki" ${item.platform === 'Rakuten Viki' ? 'selected' : ''}>Rakuten Viki</option>
+                            <option value="Other" ${item.platform === 'Other' ? 'selected' : ''}>Other</option>
+                        </select>
+                        <select class="overlay-select" onchange="updateItem(${item.id}, 'status', this.value)">
+                            <option value="Watching" ${item.status === 'Watching' ? 'selected' : ''}>Watching</option>
+                            <option value="plan-to-watch" ${item.status === 'plan-to-watch' ? 'selected' : ''}>Plan to watch</option>
+                            <option value="on-hold" ${item.status === 'on-hold' ? 'selected' : ''}>On Hold</option>
+                            <option value="watched" ${item.status === 'watched' ? 'selected' : ''}>Watched</option>
+                        </select>
+                        <button class="delete-btn-wide" onclick="deleteItem(${item.id})" title="Remove from Watchlist">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="poster-info">
+                <div class="poster-title">${item.title}</div>
+                <div class="poster-year">${yearHtml}</div>
+            </div>
+        `;
+            listContainer.appendChild(card);
+        }
+
+        function loadData() {
+            let list = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+            list.forEach(item => renderItem(item));
+            updateCounts(); // This initializes and sets the chart properly with real values
+        }
+
+        function updateCounts() {
+            const counts = [];
+            ['Watching', 'plan-to-watch', 'on-hold', 'watched'].forEach(status => {
+                const listId = `list-${status}`;
+                const countId = `count-${status}`;
+                const container = document.getElementById(listId);
+                const counter = document.getElementById(countId);
+
+                if (container && counter) {
+                    // subtract empty state if present
+                    const itemCount = container.querySelectorAll('.poster-card').length;
+                    counter.innerText = itemCount;
+                    counts.push(itemCount);
+                } else {
+                    counts.push(0);
+                }
+            });
+            updateChart(counts);
+        }
+
+        function deleteItem(id) {
+            const card = document.querySelector(`[data-id="${id}"]`);
+            if (card) {
+                card.style.animation = "fadeOut 0.3s ease forwards";
+                setTimeout(() => {
+                    let list = JSON.parse(localStorage.getItem('myWatchlist'));
+                    list = list.filter(x => x.id !== id);
+                    localStorage.setItem('myWatchlist', JSON.stringify(list));
+
+                    const parentGrid = card.parentElement;
+                    card.remove();
+
+                    if (parentGrid.querySelectorAll('.poster-card').length === 0) {
+                        parentGrid.innerHTML = '<div class="empty-state">No items yet</div>';
+                    }
+                    updateCounts();
+                }, 300);
+            }
+        }
+
+        function updateItem(id, field, value) {
+            let list = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+            let itemIndex = list.findIndex(x => x.id === id);
+            if (itemIndex > -1) {
+                list[itemIndex][field] = value;
+                localStorage.setItem('myWatchlist', JSON.stringify(list));
+                refreshDashboard();
+            }
+        }
+
+        function refreshDashboard() {
+            ['list-Watching', 'list-plan-to-watch', 'list-on-hold', 'list-watched'].forEach(listId => {
+                const container = document.getElementById(listId);
+                if (container) container.innerHTML = '<div class="empty-state">No items yet</div>';
+            });
+            loadData();
+        }
+    </script>
+
+</body>
+
+</html>

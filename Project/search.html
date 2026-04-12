@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search - Universal Watchlist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ed1c24; /* Trakt Red */
+            --primary-hover: #ff333a;
+            --primary-glow: rgba(237, 28, 36, 0.4);
+            --bg-body: #09090b;
+            --bg-glass: rgba(20, 20, 25, 0.65);
+            --bg-glass-hover: rgba(30, 30, 35, 0.8);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            /* Animated background mesh gradient */
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(237, 28, 36, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(237, 28, 36, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(15, 23, 42, 0.4) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Glassmorphism Navbar */
+        .navbar {
+            background: rgba(9, 9, 11, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+            height: 70px;
+            gap: 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #ffccd0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-color: var(--primary);
+            border-radius: 6px;
+            mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 22h20L12 2z"/></svg>') center/contain no-repeat;
+            -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L1 21h22L12 3z"/></svg>') center/contain no-repeat;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            height: 100%;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            position: relative;
+            transition: color 0.3s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .nav-link:hover::after, .nav-link.active::after {
+            width: 100%;
+        }
+        
+        .nav-link.active {
+            color: white;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 50px 20px;
+        }
+
+        /* Large Search input */
+        .search-area {
+            position: relative;
+            margin-bottom: 50px;
+            max-width: 800px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 20px 28px;
+            padding-left: 60px;
+            font-size: 1.25rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-glass);
+            background: var(--bg-glass);
+            color: white;
+            font-family: 'Inter', system-ui, sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: rgba(148, 163, 184, 0.5);
+        }
+
+        .search-input:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: var(--bg-glass-hover);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgba(237, 28, 36, 0.6);
+            background: rgba(20, 20, 25, 0.85);
+            box-shadow: 0 0 0 3px rgba(237, 28, 36, 0.2), 0 10px 40px rgba(0,0,0,0.4);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            color: var(--text-muted);
+            transition: color 0.3s;
+            pointer-events: none;
+        }
+
+        .search-input:focus ~ .search-icon {
+            color: var(--primary);
+        }
+
+        .loader {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes spin {
+            to { transform: translateY(-50%) rotate(360deg); }
+        }
+
+        /* Global Header */
+        .page-header {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -1px;
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 25px;
+        }
+
+        @media (min-width: 1200px) {
+            .results-grid {
+                grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            }
+        }
+
+        .poster-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .poster-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: rgba(20, 20, 25, 0.5);
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transform-origin: center bottom;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .poster-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.4s ease;
+        }
+
+        /* Glassmorphic overlay */
+        .poster-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: stretch;
+            padding: 20px 15px;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .poster-wrapper:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1);
+            z-index: 10;
+        }
+
+        .poster-wrapper:hover .poster-overlay {
+            opacity: 1;
+        }
+
+        .poster-wrapper:hover .poster-image {
+            transform: scale(1.08);
+            filter: brightness(0.6);
+        }
+
+        .overlay-select {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px top 50%;
+            background-size: 10px auto;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .overlay-select option {
+            background: #111;
+        }
+
+        .overlay-select:focus {
+            outline: none;
+            border-color: rgba(237, 28, 36, 0.8);
+            background: rgba(255,255,255,0.15);
+        }
+
+        .overlay-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            box-shadow: 0 4px 15px rgba(237, 28, 36, 0.3);
+            position: relative;
+            overflow: hidden;
+            font-family: inherit;
+        }
+
+        .overlay-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(255,255,255,0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .overlay-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(237, 28, 36, 0.4);
+        }
+        
+        .overlay-btn:hover::after { opacity: 1; }
+
+        .overlay-btn:active {
+            transform: translateY(1px);
+        }
+
+        .poster-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 0 4px;
+        }
+
+        .poster-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: white;
+            letter-spacing: 0.2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .poster-year {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .available-badge {
+            font-size: 0.70rem;
+            color: #fff;
+            margin-top: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-self: flex-start;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(4px);
+        }
+
+        .empty-prompt {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            background: var(--bg-glass);
+            border-radius: 16px;
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .empty-prompt::before {
+            content: '🔎';
+            font-size: 3rem;
+            opacity: 0.5;
+            display: block;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            background: rgba(15, 15, 20, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-left: 4px solid var(--primary);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            transform: translateX(120%);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            color: var(--primary);
+            background: rgba(237, 28, 36, 0.1);
+            padding: 6px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 600px) {
+            .navbar {
+                padding: 0 20px;
+                height: 60px;
+            }
+            .nav-links {
+                display: none;
+            }
+            .results-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            .search-area {
+                margin-bottom: 30px;
+            }
+            .page-header {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="search.html" class="brand">Watchlist</a>
+        <div class="nav-links">
+            <a href="search.html" class="nav-link active">Search</a>
+            <a href="watchlist.html" class="nav-link">Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="page-header">Search Movies & TV</h2>
+
+        <div class="search-area">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="search-input" id="titleInput" placeholder="Titles, people, year..."
+                autocomplete="off" autofocus>
+            <div class="loader" id="searchLoader"></div>
+        </div>
+
+        <div class="results-grid" id="resultsGrid">
+            <div class="empty-prompt" id="emptyPrompt">
+                Start typing to instantly search our database.
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="successToast">
+        <div class="toast-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6L9 17l-5-5"></path>
+            </svg>
+        </div>
+        <span>Added to watchlist!</span>
+    </div>
+
+    <div class="toast" id="infoToast" style="border-left-color: #3b82f6;">
+        <div class="toast-icon" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+        </div>
+        <span>Already in watchlist!</span>
+    </div>
+
+    <script>
+        let debounceTimer;
+        const titleInput = document.getElementById('titleInput');
+        const resultsGrid = document.getElementById('resultsGrid');
+        const searchLoader = document.getElementById('searchLoader');
+        const successToast = document.getElementById('successToast');
+        const infoToast = document.getElementById('infoToast');
+
+        titleInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            clearTimeout(debounceTimer);
+
+            if (query.length < 2) {
+                resultsGrid.innerHTML = '<div class="empty-prompt">Start typing to instantly search our database.</div>';
+                return;
+            }
+
+            searchLoader.style.display = 'block';
+            debounceTimer = setTimeout(() => { fetchMediaMatches(query); }, 400);
+        });
+
+        async function fetchMediaMatches(query) {
+            try {
+                // Fetch TV matches from TVMaze
+                const tvPromise = fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`)
+                    .then(r => r.json())
+                    .catch(() => []);
+                
+                // Fetch Movies matches from TMDB public test key
+                const tmdbPromise = fetch(`https://api.themoviedb.org/3/search/movie?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb&query=${encodeURIComponent(query)}`)
+                    .then(r => r.json())
+                    .catch(() => ({results: []}));
+                
+                const [tvMazeData, tmdbData] = await Promise.all([tvPromise, tmdbPromise]);
+                searchLoader.style.display = 'none';
+
+                let combinedResults = [];
+
+                // Process TVMaze Series
+                if (Array.isArray(tvMazeData)) {
+                    tvMazeData.forEach(item => {
+                        const show = item.show;
+                        combinedResults.push({
+                            id: 'tvm_' + show.id,
+                            title: show.name,
+                            image: show.image ? show.image.original || show.image.medium : null,
+                            year: show.premiered ? show.premiered.substring(0, 4) : 'N/A',
+                            type: show.type || 'Show',
+                            networkStr: show.webChannel ? show.webChannel.name : (show.network ? show.network.name : '')
+                        });
+                    });
+                }
+
+                // Process TMDB Movies
+                if (tmdbData && Array.isArray(tmdbData.results)) {
+                    tmdbData.results.forEach(movie => {
+                        combinedResults.push({
+                            id: 'tmdb_' + movie.id,
+                            title: movie.title || movie.original_title,
+                            image: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
+                            year: movie.release_date ? movie.release_date.substring(0, 4) : 'N/A',
+                            type: 'Movie',
+                            networkStr: '' // TMDB doesn't provide network natively in search
+                        });
+                    });
+                }
+
+                if (combinedResults.length > 0) {
+                    renderCards(combinedResults);
+                } else {
+                    resultsGrid.innerHTML = `<div class="empty-prompt">No results found for "${query}"</div>`;
+                }
+            } catch (error) {
+                console.error("Error fetching media:", error);
+                searchLoader.style.display = 'none';
+                resultsGrid.innerHTML = `<div class="empty-prompt">An error occurred while fetching results.</div>`;
+            }
+        }
+
+        function renderCards(results) {
+            // Show up to 24 results
+            const limitedResults = results.slice(0, 24);
+            const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
+            
+            const list = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+
+            const cardsHTML = limitedResults.map(item => {
+                const imageUrl = item.image || defaultImg;
+                const cleanTitle = item.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
+                const platformId = 'plat_' + item.id;
+                const statusId = 'stat_' + item.id;
+
+                const availableOnHtml = item.networkStr ? `<div class="available-badge">${item.networkStr}</div>` : '';
+
+                const itemYear = item.year !== 'N/A' ? item.year : null;
+                const watchlistItem = list.find(wItem => wItem.title === item.title && wItem.year == itemYear);
+
+                let overlayContent = '';
+                if (watchlistItem) {
+                    overlayContent = `
+                        <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="showAlreadyInListToast()">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">In Watchlist</div>
+                            <div style="font-size: 0.95rem; font-weight: 700; color: white;">${watchlistItem.platform}</div>
+                            <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${watchlistItem.status.replace(/-/g, ' ')}</div>
+                        </div>
+                    `;
+                } else {
+                    // Try to pre-select common platforms if they match the network networkStr
+                    let netLower = item.networkStr.toLowerCase();
+                    let autoPlatform = "Other";
+                    if (netLower.includes("netflix")) autoPlatform = "Netflix";
+                    else if (netLower.includes("amazon") || netLower.includes("prime")) autoPlatform = "Prime Video";
+                    else if (netLower.includes("disney")) autoPlatform = "Disney+";
+                    else if (netLower.includes("crunchyroll")) autoPlatform = "Crunchyroll";
+                    else if (netLower.includes("viki")) autoPlatform = "Rakuten Viki";
+
+                    overlayContent = `
+                        <select id="${platformId}" class="overlay-select">
+                            <option value="Netflix" ${autoPlatform === 'Netflix' ? 'selected' : ''}>Netflix</option>
+                            <option value="Prime Video" ${autoPlatform === 'Prime Video' ? 'selected' : ''}>Prime Video</option>
+                            <option value="Disney+" ${autoPlatform === 'Disney+' ? 'selected' : ''}>Disney+</option>
+                            <option value="Crunchyroll" ${autoPlatform === 'Crunchyroll' ? 'selected' : ''}>Crunchyroll</option>
+                            <option value="Rakuten Viki" ${autoPlatform === 'Rakuten Viki' ? 'selected' : ''}>Rakuten Viki</option>
+                            <option value="Other" ${autoPlatform === 'Other' ? 'selected' : ''}>Other</option>
+                        </select>
+                        <select id="${statusId}" class="overlay-select">
+                            <option value="Watching">Watching</option>
+                            <option value="plan-to-watch">Plan to watch</option>
+                            <option value="on-hold">On Hold</option>
+                            <option value="watched">Watched</option>
+                        </select>
+                        <button class="overlay-btn" onclick="addToWatchlist('${cleanTitle}', '${imageUrl}', '${item.year}', '${platformId}', '${statusId}', this)">Add to List</button>
+                    `;
+                }
+
+                return `
+                <div class="poster-card">
+                    <div class="poster-wrapper">
+                        <img src="${imageUrl}" class="poster-image" alt="${cleanTitle}" loading="lazy" onerror="this.src='${defaultImg}'">
+                        <div class="poster-overlay">
+                            ${overlayContent}
+                        </div>
+                    </div>
+                    <div class="poster-info">
+                        <div class="poster-title">${item.title}</div>
+                        <div class="poster-year">${item.year} • ${item.type}</div>
+                        ${availableOnHtml}
+                    </div>
+                </div>
+            `;
+            }).join('');
+
+            resultsGrid.innerHTML = cardsHTML;
+        }
+
+        function showToast() {
+            successToast.classList.add('show');
+            setTimeout(() => { successToast.classList.remove('show'); }, 3000);
+        }
+
+        function showAlreadyInListToast() {
+            infoToast.classList.add('show');
+            setTimeout(() => { infoToast.classList.remove('show'); }, 3000);
+        }
+
+        function addToWatchlist(title, image, year, platformSelectId, statusSelectId, btnElement) {
+            const platform = document.getElementById(platformSelectId).value;
+            const status = document.getElementById(statusSelectId).value;
+
+            let list = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+            
+            const itemYear = year !== 'N/A' ? year : null;
+            if (list.some(wItem => wItem.title === title && wItem.year == itemYear)) {
+                showAlreadyInListToast();
+                return;
+            }
+
+            const mediaObj = {
+                id: Date.now(),
+                title,
+                platform,
+                status,
+                image,
+                year: itemYear
+            };
+
+            list.push(mediaObj);
+            localStorage.setItem('myWatchlist', JSON.stringify(list));
+
+            showToast();
+
+            const overlayDiv = btnElement.parentElement;
+            
+            overlayDiv.innerHTML = `
+                <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="showAlreadyInListToast()">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Added</div>
+                    <div style="font-size: 0.95rem; font-weight: 700; color: white;">${platform}</div>
+                    <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${status.replace(/-/g, ' ')}</div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                const titleNode = overlayDiv.querySelector('div > div:first-child');
+                if (titleNode) titleNode.innerText = 'In Watchlist';
+            }, 2000);
+        }
+    </script>
+
+</body>
+</html>
