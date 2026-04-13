@@ -513,6 +513,7 @@
         <div class="nav-links">
             <a href="index.html" class="nav-link active">Search</a>
             <a href="watchlist.html" class="nav-link">Dashboard</a>
+            <a href="login.html" class="nav-link" id="authLink">Sign In</a>
         </div>
     </nav>
 
@@ -559,13 +560,53 @@
         <span>Already in watchlist!</span>
     </div>
 
-    <script>
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, doc, setDoc, getDoc } from './firebase-config.js';
+
         let debounceTimer;
         const titleInput = document.getElementById('titleInput');
         const resultsGrid = document.getElementById('resultsGrid');
         const searchLoader = document.getElementById('searchLoader');
         const successToast = document.getElementById('successToast');
         const infoToast = document.getElementById('infoToast');
+
+        let currentUser = null;
+        let windowUserWatchlist = [];
+        let currentCombinedResults = [];
+
+        onAuthStateChanged(auth, async (user) => {
+            const authLink = document.getElementById('authLink');
+            if (user) {
+                currentUser = user;
+                authLink.textContent = "Logout";
+                authLink.href = "#";
+                authLink.onclick = (e) => {
+                    e.preventDefault();
+                    signOut(auth).then(() => {
+                        window.location.reload();
+                    });
+                };
+                
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().watchlist) {
+                        windowUserWatchlist = userDoc.data().watchlist;
+                    }
+                } catch(e) {
+                    console.error("Error fetching watchlist", e);
+                }
+            } else {
+                currentUser = null;
+                windowUserWatchlist = [];
+                authLink.textContent = "Sign In";
+                authLink.href = "login.html";
+                authLink.onclick = null;
+            }
+            
+            if (currentCombinedResults.length > 0) {
+                renderCards(currentCombinedResults);
+            }
+        });
 
         titleInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
@@ -582,12 +623,10 @@
 
         async function fetchMediaMatches(query) {
             try {
-                // Fetch TV matches from TVMaze
                 const tvPromise = fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`)
                     .then(r => r.json())
                     .catch(() => []);
 
-                // Fetch Movies matches from TMDB public test key
                 const tmdbPromise = fetch(`https://api.themoviedb.org/3/search/movie?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb&query=${encodeURIComponent(query)}`)
                     .then(r => r.json())
                     .catch(() => ({ results: [] }));
@@ -597,7 +636,6 @@
 
                 let combinedResults = [];
 
-                // Process TVMaze Series
                 if (Array.isArray(tvMazeData)) {
                     tvMazeData.forEach(item => {
                         const show = item.show;
@@ -612,7 +650,6 @@
                     });
                 }
 
-                // Process TMDB Movies
                 if (tmdbData && Array.isArray(tmdbData.results)) {
                     tmdbData.results.forEach(movie => {
                         combinedResults.push({
@@ -621,14 +658,16 @@
                             image: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
                             year: movie.release_date ? movie.release_date.substring(0, 4) : 'N/A',
                             type: 'Movie',
-                            networkStr: '' // TMDB doesn't provide network natively in search
+                            networkStr: '' 
                         });
                     });
                 }
 
                 if (combinedResults.length > 0) {
+                    currentCombinedResults = combinedResults;
                     renderCards(combinedResults);
                 } else {
+                    currentCombinedResults = [];
                     resultsGrid.innerHTML = `<div class="empty-prompt">No results found for "${query}"</div>`;
                 }
             } catch (error) {
@@ -639,11 +678,10 @@
         }
 
         function renderCards(results) {
-            // Show up to 24 results
             const limitedResults = results.slice(0, 24);
             const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
 
-            const list = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+            const list = windowUserWatchlist;
 
             const cardsHTML = limitedResults.map(item => {
                 const imageUrl = item.image || defaultImg;
@@ -660,14 +698,13 @@
                 let overlayContent = '';
                 if (watchlistItem) {
                     overlayContent = `
-                        <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="showAlreadyInListToast()">
+                        <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="window.showAlreadyInListToast()">
                             <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">In Watchlist</div>
                             <div style="font-size: 0.95rem; font-weight: 700; color: white;">${watchlistItem.platform}</div>
                             <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${watchlistItem.status.replace(/-/g, ' ')}</div>
                         </div>
                     `;
                 } else {
-                    // Try to pre-select common platforms if they match the network networkStr
                     let netLower = item.networkStr.toLowerCase();
                     let autoPlatform = "Other";
                     if (netLower.includes("netflix")) autoPlatform = "Netflix";
@@ -691,7 +728,7 @@
                             <option value="on-hold">On Hold</option>
                             <option value="watched">Watched</option>
                         </select>
-                        <button class="overlay-btn" onclick="addToWatchlist('${cleanTitle}', '${imageUrl}', '${item.year}', '${platformId}', '${statusId}', this)">Add to List</button>
+                        <button class="overlay-btn" onclick="window.addToWatchlist('${cleanTitle}', '${imageUrl}', '${item.year}', '${platformId}', '${statusId}', this)">Add to List</button>
                     `;
                 }
 
@@ -715,25 +752,28 @@
             resultsGrid.innerHTML = cardsHTML;
         }
 
-        function showToast() {
+        window.showToast = function() {
             successToast.classList.add('show');
             setTimeout(() => { successToast.classList.remove('show'); }, 3000);
         }
 
-        function showAlreadyInListToast() {
+        window.showAlreadyInListToast = function() {
             infoToast.classList.add('show');
             setTimeout(() => { infoToast.classList.remove('show'); }, 3000);
         }
 
-        function addToWatchlist(title, image, year, platformSelectId, statusSelectId, btnElement) {
+        window.addToWatchlist = async function(title, image, year, platformSelectId, statusSelectId, btnElement) {
+            if (!currentUser) {
+                window.location.href = "login.html";
+                return;
+            }
+
             const platform = document.getElementById(platformSelectId).value;
             const status = document.getElementById(statusSelectId).value;
 
-            let list = JSON.parse(localStorage.getItem('myWatchlist')) || [];
-
             const itemYear = year !== 'N/A' ? year : null;
-            if (list.some(wItem => wItem.title === title && wItem.year == itemYear)) {
-                showAlreadyInListToast();
+            if (windowUserWatchlist.some(wItem => wItem.title === title && wItem.year == itemYear)) {
+                window.showAlreadyInListToast();
                 return;
             }
 
@@ -746,15 +786,14 @@
                 year: itemYear
             };
 
-            list.push(mediaObj);
-            localStorage.setItem('myWatchlist', JSON.stringify(list));
+            const newList = [...windowUserWatchlist, mediaObj];
+            windowUserWatchlist = newList;
 
-            showToast();
+            window.showToast();
 
             const overlayDiv = btnElement.parentElement;
-
             overlayDiv.innerHTML = `
-                <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="showAlreadyInListToast()">
+                <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="window.showAlreadyInListToast()">
                     <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Added</div>
                     <div style="font-size: 0.95rem; font-weight: 700; color: white;">${platform}</div>
                     <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${status.replace(/-/g, ' ')}</div>
@@ -765,6 +804,12 @@
                 const titleNode = overlayDiv.querySelector('div > div:first-child');
                 if (titleNode) titleNode.innerText = 'In Watchlist';
             }, 2000);
+
+            try {
+                await setDoc(doc(db, "users", currentUser.uid), { watchlist: newList }, { merge: true });
+            } catch (e) {
+                console.error("Error saving to Firestore", e);
+            }
         }
     </script>
 

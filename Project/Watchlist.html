@@ -483,6 +483,7 @@
         <div class="nav-links">
             <a href="index.html" class="nav-link">Search</a>
             <a href="watchlist.html" class="nav-link active">Dashboard</a>
+            <a href="login.html" class="nav-link" id="authLink">Sign In</a>
         </div>
     </nav>
 
@@ -538,10 +539,43 @@
         </div>
     </div>
 
-    <script>
-        let progressChart = null;
+    <script type="module">
+        import { auth, db, onAuthStateChanged, signOut, doc, setDoc, getDoc } from './firebase-config.js';
 
-        document.addEventListener('DOMContentLoaded', loadData);
+        let progressChart = null;
+        let currentUser = null;
+        let windowUserWatchlist = [];
+
+        onAuthStateChanged(auth, async (user) => {
+            const authLink = document.getElementById('authLink');
+            if (user) {
+                currentUser = user;
+                authLink.textContent = "Logout";
+                authLink.href = "#";
+                authLink.onclick = (e) => {
+                    e.preventDefault();
+                    signOut(auth).then(() => {
+                        window.location.href = "login.html";
+                    });
+                };
+                
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().watchlist) {
+                        windowUserWatchlist = userDoc.data().watchlist;
+                    }
+                    refreshDashboard();
+                } catch(e) {
+                    console.error("Error fetching watchlist", e);
+                }
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCounts();
+        });
 
         function initChart(counts, labels) {
             const ctx = document.getElementById('progressChart').getContext('2d');
@@ -658,7 +692,7 @@
                 <div class="platform-tag">${item.platform}</div>
                 <div class="poster-overlay">
                     <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-                        <select class="overlay-select" onchange="updateItem(${item.id}, 'platform', this.value)">
+                        <select class="overlay-select" onchange="window.updateItem(${item.id}, 'platform', this.value)">
                             <option value="Netflix" ${item.platform === 'Netflix' ? 'selected' : ''}>Netflix</option>
                             <option value="Prime Video" ${item.platform === 'Prime Video' ? 'selected' : ''}>Prime Video</option>
                             <option value="Disney+" ${item.platform === 'Disney+' ? 'selected' : ''}>Disney+</option>
@@ -666,13 +700,13 @@
                             <option value="Rakuten Viki" ${item.platform === 'Rakuten Viki' ? 'selected' : ''}>Rakuten Viki</option>
                             <option value="Other" ${item.platform === 'Other' ? 'selected' : ''}>Other</option>
                         </select>
-                        <select class="overlay-select" onchange="updateItem(${item.id}, 'status', this.value)">
+                        <select class="overlay-select" onchange="window.updateItem(${item.id}, 'status', this.value)">
                             <option value="Watching" ${item.status === 'Watching' ? 'selected' : ''}>Watching</option>
                             <option value="plan-to-watch" ${item.status === 'plan-to-watch' ? 'selected' : ''}>Plan to watch</option>
                             <option value="on-hold" ${item.status === 'on-hold' ? 'selected' : ''}>On Hold</option>
                             <option value="watched" ${item.status === 'watched' ? 'selected' : ''}>Watched</option>
                         </select>
-                        <button class="delete-btn-wide" onclick="deleteItem(${item.id})" title="Remove from Watchlist">
+                        <button class="delete-btn-wide" onclick="window.deleteItem(${item.id})" title="Remove from Watchlist">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                             Remove
                         </button>
@@ -688,9 +722,8 @@
         }
 
         function loadData() {
-            let list = JSON.parse(localStorage.getItem('myWatchlist')) || [];
-            list.forEach(item => renderItem(item));
-            updateCounts(); // This initializes and sets the chart properly with real values
+            windowUserWatchlist.forEach(item => renderItem(item));
+            updateCounts(); 
         }
 
         function updateCounts() {
@@ -702,7 +735,6 @@
                 const counter = document.getElementById(countId);
 
                 if (container && counter) {
-                    // subtract empty state if present
                     const itemCount = container.querySelectorAll('.poster-card').length;
                     counter.innerText = itemCount;
                     counts.push(itemCount);
@@ -713,15 +745,20 @@
             updateChart(counts);
         }
 
-        function deleteItem(id) {
+        window.deleteItem = async function(id) {
             const card = document.querySelector(`[data-id="${id}"]`);
             if (card) {
                 card.style.animation = "fadeOut 0.3s ease forwards";
+                
+                windowUserWatchlist = windowUserWatchlist.filter(x => x.id !== id);
+                
+                try {
+                    await setDoc(doc(db, "users", currentUser.uid), { watchlist: windowUserWatchlist }, { merge: true });
+                } catch(e) {
+                    console.error("Delete Error", e);
+                }
+                
                 setTimeout(() => {
-                    let list = JSON.parse(localStorage.getItem('myWatchlist'));
-                    list = list.filter(x => x.id !== id);
-                    localStorage.setItem('myWatchlist', JSON.stringify(list));
-
                     const parentGrid = card.parentElement;
                     card.remove();
 
@@ -733,13 +770,17 @@
             }
         }
 
-        function updateItem(id, field, value) {
-            let list = JSON.parse(localStorage.getItem('myWatchlist')) || [];
-            let itemIndex = list.findIndex(x => x.id === id);
+        window.updateItem = async function(id, field, value) {
+            let itemIndex = windowUserWatchlist.findIndex(x => x.id === id);
             if (itemIndex > -1) {
-                list[itemIndex][field] = value;
-                localStorage.setItem('myWatchlist', JSON.stringify(list));
-                refreshDashboard();
+                windowUserWatchlist[itemIndex][field] = value;
+                
+                try {
+                    await setDoc(doc(db, "users", currentUser.uid), { watchlist: windowUserWatchlist }, { merge: true });
+                    refreshDashboard();
+                } catch(e) {
+                    console.error("Update Error", e);
+                }
             }
         }
 
