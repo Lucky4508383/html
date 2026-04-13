@@ -9,7 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary: #ed1c24; /* Trakt Red */
+            --primary: #ed1c24;
+            /* Trakt Red */
             --primary-hover: #ff333a;
             --primary-glow: rgba(237, 28, 36, 0.4);
             --bg-body: #09090b;
@@ -32,7 +33,7 @@
             color: var(--text-main);
             min-height: 100vh;
             /* Animated background mesh gradient */
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(237, 28, 36, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(237, 28, 36, 0.1) 0px, transparent 50%),
@@ -115,10 +116,11 @@
             border-radius: 2px;
         }
 
-        .nav-link:hover::after, .nav-link.active::after {
+        .nav-link:hover::after,
+        .nav-link.active::after {
             width: 100%;
         }
-        
+
         .nav-link.active {
             color: white;
             font-weight: 600;
@@ -250,8 +252,15 @@
         }
 
         @keyframes slideUpFade {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .poster-wrapper {
@@ -262,7 +271,7 @@
             overflow: hidden;
             background-color: rgba(20, 20, 25, 0.5);
             border: 1px solid var(--border-glass);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
             transform-origin: center bottom;
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
@@ -278,7 +287,7 @@
         .poster-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%);
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0.3) 100%);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -293,7 +302,7 @@
 
         .poster-wrapper:hover {
             transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
             z-index: 10;
         }
 
@@ -307,8 +316,8 @@
         }
 
         .overlay-select {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: #fff;
             padding: 10px 12px;
             border-radius: 8px;
@@ -332,7 +341,7 @@
         .overlay-select:focus {
             outline: none;
             border-color: rgba(237, 28, 36, 0.8);
-            background: rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.15);
         }
 
         .platform-tag {
@@ -396,7 +405,7 @@
             text-overflow: ellipsis;
             color: white;
             letter-spacing: 0.2px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .poster-year {
@@ -426,7 +435,7 @@
             min-height: 150px;
             justify-content: center;
         }
-        
+
         .empty-state::before {
             content: '📋';
             font-size: 2.5rem;
@@ -439,6 +448,7 @@
                 opacity: 1;
                 transform: scale(1);
             }
+
             to {
                 opacity: 0;
                 transform: scale(0.9);
@@ -558,14 +568,14 @@
                         window.location.href = "login.html";
                     });
                 };
-                
+
                 try {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
                     if (userDoc.exists() && userDoc.data().watchlist) {
                         windowUserWatchlist = userDoc.data().watchlist;
                     }
                     refreshDashboard();
-                } catch(e) {
+                } catch (e) {
                     console.error("Error fetching watchlist", e);
                 }
             } else {
@@ -611,7 +621,7 @@
                                 font: { family: 'Inter', size: 12 },
                                 boxWidth: 12,
                                 padding: 15,
-                                generateLabels: function(chart) {
+                                generateLabels: function (chart) {
                                     const data = chart.data;
                                     if (data.labels.length && data.datasets.length) {
                                         const originalLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
@@ -638,7 +648,7 @@
                             cornerRadius: 8,
                             displayColors: true,
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     const baseLabel = context.label.split(':')[0];
                                     return ` ${baseLabel}: ${context.raw}`;
                                 }
@@ -723,7 +733,7 @@
 
         function loadData() {
             windowUserWatchlist.forEach(item => renderItem(item));
-            updateCounts(); 
+            updateCounts();
         }
 
         function updateCounts() {
@@ -745,19 +755,19 @@
             updateChart(counts);
         }
 
-        window.deleteItem = async function(id) {
+        window.deleteItem = async function (id) {
             const card = document.querySelector(`[data-id="${id}"]`);
             if (card) {
                 card.style.animation = "fadeOut 0.3s ease forwards";
-                
+
                 windowUserWatchlist = windowUserWatchlist.filter(x => x.id !== id);
-                
+
                 try {
                     await setDoc(doc(db, "users", currentUser.uid), { watchlist: windowUserWatchlist }, { merge: true });
-                } catch(e) {
+                } catch (e) {
                     console.error("Delete Error", e);
                 }
-                
+
                 setTimeout(() => {
                     const parentGrid = card.parentElement;
                     card.remove();
@@ -770,15 +780,15 @@
             }
         }
 
-        window.updateItem = async function(id, field, value) {
+        window.updateItem = async function (id, field, value) {
             let itemIndex = windowUserWatchlist.findIndex(x => x.id === id);
             if (itemIndex > -1) {
                 windowUserWatchlist[itemIndex][field] = value;
-                
+
                 try {
                     await setDoc(doc(db, "users", currentUser.uid), { watchlist: windowUserWatchlist }, { merge: true });
                     refreshDashboard();
-                } catch(e) {
+                } catch (e) {
                     console.error("Update Error", e);
                 }
             }

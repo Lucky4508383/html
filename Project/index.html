@@ -586,13 +586,13 @@
                         window.location.reload();
                     });
                 };
-                
+
                 try {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
                     if (userDoc.exists() && userDoc.data().watchlist) {
                         windowUserWatchlist = userDoc.data().watchlist;
                     }
-                } catch(e) {
+                } catch (e) {
                     console.error("Error fetching watchlist", e);
                 }
             } else {
@@ -602,7 +602,7 @@
                 authLink.href = "login.html";
                 authLink.onclick = null;
             }
-            
+
             if (currentCombinedResults.length > 0) {
                 renderCards(currentCombinedResults);
             }
@@ -658,7 +658,7 @@
                             image: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
                             year: movie.release_date ? movie.release_date.substring(0, 4) : 'N/A',
                             type: 'Movie',
-                            networkStr: '' 
+                            networkStr: ''
                         });
                     });
                 }
@@ -752,17 +752,17 @@
             resultsGrid.innerHTML = cardsHTML;
         }
 
-        window.showToast = function() {
+        window.showToast = function () {
             successToast.classList.add('show');
             setTimeout(() => { successToast.classList.remove('show'); }, 3000);
         }
 
-        window.showAlreadyInListToast = function() {
+        window.showAlreadyInListToast = function () {
             infoToast.classList.add('show');
             setTimeout(() => { infoToast.classList.remove('show'); }, 3000);
         }
 
-        window.addToWatchlist = async function(title, image, year, platformSelectId, statusSelectId, btnElement) {
+        window.addToWatchlist = async function (title, image, year, platformSelectId, statusSelectId, btnElement) {
             if (!currentUser) {
                 window.location.href = "login.html";
                 return;
