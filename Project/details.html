@@ -123,7 +123,7 @@
             position: absolute;
             inset: 0;
             background: linear-gradient(to right, rgba(9, 9, 11, 0.95) 10%, rgba(9, 9, 11, 0.6) 50%, rgba(9, 9, 11, 0.4) 100%),
-                        linear-gradient(to top, rgba(9, 9, 11, 1) 0%, rgba(9, 9, 11, 0) 25%);
+                linear-gradient(to top, rgba(9, 9, 11, 1) 0%, rgba(9, 9, 11, 0) 25%);
         }
 
         .hero-content {
@@ -199,7 +199,7 @@
             align-items: center;
             gap: 6px;
         }
-        
+
         .rating-tag {
             color: #f59e0b;
             border-color: rgba(245, 158, 11, 0.3);
@@ -298,7 +298,7 @@
             gap: 20px;
             padding-bottom: 20px;
             scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.2) transparent;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
         }
 
         .h-scroll::-webkit-scrollbar {
@@ -306,7 +306,7 @@
         }
 
         .h-scroll::-webkit-scrollbar-thumb {
-            background-color: rgba(255,255,255,0.2);
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 4px;
         }
 
@@ -322,7 +322,7 @@
             overflow: hidden;
             padding-bottom: 12px;
         }
-        
+
         .cast-img {
             width: 100%;
             height: 225px;
@@ -370,6 +370,67 @@
             border: none;
         }
 
+        /* Episodes */
+        .episode-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .episode-card:hover {
+            background: var(--bg-glass-hover);
+            transform: translateX(5px);
+        }
+
+        .episode-img {
+            width: 160px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #111;
+            flex-shrink: 0;
+        }
+
+        .episode-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .episode-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        .episode-meta {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .episode-overview {
+            font-size: 0.9rem;
+            color: #d1d5db;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 600px) {
+            .episode-card {
+                flex-direction: column;
+            }
+
+            .episode-img {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 16/9;
+            }
+        }
+
         /* Similar Cards using same styles as index */
         .poster-card {
             flex: 0 0 180px;
@@ -391,7 +452,7 @@
 
         .poster-wrapper:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
         }
 
         .poster-wrapper img {
@@ -430,14 +491,16 @@
         .spinner {
             width: 50px;
             height: 50px;
-            border: 4px solid rgba(255,255,255,0.1);
+            border: 4px solid rgba(255, 255, 255, 0.1);
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 1s infinite linear;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         @media (max-width: 900px) {
@@ -447,18 +510,23 @@
                 text-align: center;
                 padding-top: 40px;
             }
+
             .meta-tags {
                 justify-content: center;
             }
+
             .action-area {
                 justify-content: center;
             }
-            .media-title { font-size: 2.5rem; }
+
+            .media-title {
+                font-size: 2.5rem;
+            }
+
             .hero-backdrop::after {
                 background: linear-gradient(to top, rgba(9, 9, 11, 1) 0%, rgba(9, 9, 11, 0.8) 50%, rgba(9, 9, 11, 0.4) 100%);
             }
         }
-        
     </style>
 </head>
 
@@ -493,7 +561,7 @@
                         <!-- Injected via JS -->
                     </div>
                     <div class="media-overview" id="mainOverview"></div>
-                    
+
                     <div class="action-area" id="actionArea">
                         <select id="platformSelect" class="action-select">
                             <option value="Netflix">Netflix</option>
@@ -510,7 +578,11 @@
                             <option value="watched">Watched</option>
                         </select>
                         <button class="action-btn" id="addBtn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
                             Add to List
                         </button>
                     </div>
@@ -531,6 +603,10 @@
         <section class="content-section" id="seasonSection" style="display:none;">
             <h2 class="section-title">Seasons</h2>
             <div class="h-scroll" id="seasonContainer"></div>
+            <div id="episodesSection" style="display: none; margin-top: 30px;">
+                <h3 class="section-title" id="episodesTitle" style="font-size: 1.4rem;">Episodes</h3>
+                <div id="episodesContainer"></div>
+            </div>
         </section>
 
         <section class="content-section" id="similarSection" style="display:none;">
@@ -635,14 +711,14 @@
 
             const dateStr = type === 'movie' ? data.release_date : data.first_air_date;
             const yearStr = dateStr ? dateStr.substring(0, 4) : 'N/A';
-            
+
             const rating = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
             const runtime = type === 'movie' ? data.runtime + ' min' : (data.episode_run_time?.[0] ? data.episode_run_time[0] + ' min' : (data.number_of_seasons ? data.number_of_seasons + ' Seasons' : ''));
 
             let tagsHtml = `<div class="meta-tag rating-tag">★ ${rating}</div>`;
             tagsHtml += `<div class="meta-tag">${yearStr}</div>`;
             if (runtime) tagsHtml += `<div class="meta-tag">${runtime}</div>`;
-            
+
             if (data.genres) {
                 data.genres.slice(0, 3).forEach(g => {
                     tagsHtml += `<div class="meta-tag">${g.name}</div>`;
@@ -662,8 +738,8 @@
                 else if (netLower.includes("crunchyroll")) autoPlatform = "Crunchyroll";
                 else if (netLower.includes("viki")) autoPlatform = "Rakuten Viki";
             } else if (data.production_companies && data.production_companies.length > 0) {
-                 let netLower = data.production_companies[0].name.toLowerCase();
-                 if (netLower.includes("netflix")) autoPlatform = "Netflix";
+                let netLower = data.production_companies[0].name.toLowerCase();
+                if (netLower.includes("netflix")) autoPlatform = "Netflix";
             }
             document.getElementById('platformSelect').value = autoPlatform;
         }
@@ -671,10 +747,10 @@
         function renderCast(castArray) {
             if (!castArray || castArray.length === 0) return;
             document.getElementById('castSection').style.display = 'block';
-            
+
             const container = document.getElementById('castContainer');
             const defaultMug = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
-            
+
             const html = castArray.slice(0, 15).map(person => {
                 const img = person.profile_path ? `https://image.tmdb.org/t/p/w200${person.profile_path}` : defaultMug;
                 return `
@@ -697,7 +773,7 @@
 
             document.getElementById('videoSection').style.display = 'block';
             const container = document.getElementById('videoContainer');
-            
+
             const html = validTrailers.map(vid => `
                 <div class="video-card">
                     <iframe src="https://www.youtube.com/embed/${vid.key}" allowfullscreen></iframe>
@@ -709,21 +785,21 @@
         function renderSeasons(seasonArray) {
             if (!seasonArray || seasonArray.length === 0) return;
             document.getElementById('seasonSection').style.display = 'block';
-            
+
             const container = document.getElementById('seasonContainer');
             const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
-            
+
             // Optionally filter out specials (season 0) or just sort them
-            const sortedSeasons = seasonArray.filter(s => s.season_number > 0).sort((a,b) => a.season_number - b.season_number);
+            const sortedSeasons = seasonArray.filter(s => s.season_number > 0).sort((a, b) => a.season_number - b.season_number);
             if (sortedSeasons.length === 0) return; // if only specials were there
-            
+
             const html = sortedSeasons.map(season => {
                 const img = season.poster_path ? `https://image.tmdb.org/t/p/w200${season.poster_path}` : defaultImg;
                 const year = season.air_date ? season.air_date.substring(0, 4) : 'N/A';
                 const epCount = season.episode_count ? `${season.episode_count} Episodes` : '';
                 return `
-                <div class="poster-card" style="cursor: default;">
-                    <div class="poster-wrapper" style="pointer-events: none;">
+                <div class="poster-card" onclick="window.fetchAndRenderEpisodes(${season.season_number}, '${season.name.replace(/'/g, "\\'")}')">
+                    <div class="poster-wrapper">
                         <img src="${img}" alt="${season.name}" onerror="this.src='${defaultImg}'">
                     </div>
                     <div class="poster-title">${season.name}</div>
@@ -734,17 +810,65 @@
             container.innerHTML = html;
         }
 
+        window.fetchAndRenderEpisodes = async (seasonNumber, seasonName) => {
+            const container = document.getElementById('episodesContainer');
+            const section = document.getElementById('episodesSection');
+            const titleEl = document.getElementById('episodesTitle');
+
+            section.style.display = 'block';
+            titleEl.innerText = `Loading ${seasonName}...`;
+            container.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
+
+            // Scroll to episodes section smoothly
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            try {
+                const res = await fetch(`https://api.themoviedb.org/3/tv/${currentMediaObj._myId}/season/${seasonNumber}?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb`);
+                const data = await res.json();
+
+                if (!data.episodes || data.episodes.length === 0) {
+                    container.innerHTML = '<p>No episodes available.</p>';
+                    titleEl.innerText = seasonName;
+                    return;
+                }
+
+                const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
+
+                const html = data.episodes.map(ep => {
+                    const img = ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : defaultImg;
+                    const runTime = ep.runtime ? ` • ${ep.runtime} min` : '';
+                    return `
+                        <div class="episode-card">
+                            <img src="${img}" class="episode-img" alt="${ep.name}" onerror="this.src='${defaultImg}'">
+                            <div class="episode-info">
+                                <div class="episode-title">${ep.episode_number}. ${ep.name}</div>
+                                <div class="episode-meta">${ep.air_date || 'TBA'}${runTime}</div>
+                                <div class="episode-overview">${ep.overview || 'No description available for this episode.'}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                titleEl.innerText = `Episodes - ${seasonName}`;
+                container.innerHTML = html;
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p>Error loading episodes.</p>';
+                titleEl.innerText = seasonName;
+            }
+        };
+
         function renderSimilar(similarArray, type) {
             if (!similarArray || similarArray.length === 0) return;
             document.getElementById('similarSection').style.display = 'block';
-            
+
             const container = document.getElementById('similarContainer');
             const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
-            
+
             const html = similarArray.slice(0, 10).map(item => {
                 const img = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : defaultImg;
                 const title = type === 'movie' ? (item.title || item.original_title) : (item.name || item.original_name);
-                const year = type === 'movie' ? (item.release_date?.substring(0,4)) : (item.first_air_date?.substring(0,4));
+                const year = type === 'movie' ? (item.release_date?.substring(0, 4)) : (item.first_air_date?.substring(0, 4));
                 return `
                 <div class="poster-card" onclick="window.location.href='details.html?id=${item.id}&type=${type}'">
                     <div class="poster-wrapper">
@@ -764,7 +888,7 @@
             const title = currentMediaObj._type === 'movie' ? (currentMediaObj.title || currentMediaObj.original_title) : (currentMediaObj.name || currentMediaObj.original_name);
             const dateStr = currentMediaObj._type === 'movie' ? currentMediaObj.release_date : currentMediaObj.first_air_date;
             const itemYear = dateStr ? dateStr.substring(0, 4) : null;
-            
+
             // Note: We check by title and year, or tmdbId if we added it newly
             const watchlistItem = windowUserWatchlist.find(w => w.tmdbId == currentMediaObj._myId || (w.title === title && w.year == itemYear));
 
@@ -797,7 +921,7 @@
                     const status = statSelect.value;
                     const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
                     const image = currentMediaObj.poster_path ? `https://image.tmdb.org/t/p/w500${currentMediaObj.poster_path}` : defaultImg;
-                    
+
                     const mediaObj = {
                         id: Date.now(),
                         tmdbId: currentMediaObj._myId,
@@ -810,7 +934,7 @@
                     };
 
                     windowUserWatchlist.push(mediaObj);
-                    
+
                     try {
                         await setDoc(doc(db, "users", currentUser.uid), { watchlist: windowUserWatchlist }, { merge: true });
                         btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg> Added`;
@@ -823,4 +947,5 @@
         }
     </script>
 </body>
+
 </html>
