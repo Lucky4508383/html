@@ -696,13 +696,15 @@
             const imageSrc = item.image || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
             const cleanTitle = item.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
+            const onClickHtml = (item.tmdbId && item.mediaType) ? `onclick="window.location.href='details.html?id=${item.tmdbId}&type=${item.mediaType}'" style="cursor: pointer;"` : '';
+
             card.innerHTML = `
-            <div class="poster-wrapper">
+            <div class="poster-wrapper" ${onClickHtml}>
                 <img src="${imageSrc}" class="poster-image" alt="${cleanTitle}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4='">
                 <div class="platform-tag">${item.platform}</div>
                 <div class="poster-overlay">
                     <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-                        <select class="overlay-select" onchange="window.updateItem(${item.id}, 'platform', this.value)">
+                        <select class="overlay-select" onchange="event.stopPropagation(); window.updateItem(${item.id}, 'platform', this.value)" onclick="event.stopPropagation()">
                             <option value="Netflix" ${item.platform === 'Netflix' ? 'selected' : ''}>Netflix</option>
                             <option value="Prime Video" ${item.platform === 'Prime Video' ? 'selected' : ''}>Prime Video</option>
                             <option value="Disney+" ${item.platform === 'Disney+' ? 'selected' : ''}>Disney+</option>
@@ -710,13 +712,13 @@
                             <option value="Rakuten Viki" ${item.platform === 'Rakuten Viki' ? 'selected' : ''}>Rakuten Viki</option>
                             <option value="Other" ${item.platform === 'Other' ? 'selected' : ''}>Other</option>
                         </select>
-                        <select class="overlay-select" onchange="window.updateItem(${item.id}, 'status', this.value)">
+                        <select class="overlay-select" onchange="event.stopPropagation(); window.updateItem(${item.id}, 'status', this.value)" onclick="event.stopPropagation()">
                             <option value="Watching" ${item.status === 'Watching' ? 'selected' : ''}>Watching</option>
                             <option value="plan-to-watch" ${item.status === 'plan-to-watch' ? 'selected' : ''}>Plan to watch</option>
                             <option value="on-hold" ${item.status === 'on-hold' ? 'selected' : ''}>On Hold</option>
                             <option value="watched" ${item.status === 'watched' ? 'selected' : ''}>Watched</option>
                         </select>
-                        <button class="delete-btn-wide" onclick="window.deleteItem(${item.id})" title="Remove from Watchlist">
+                        <button class="delete-btn-wide" onclick="event.stopPropagation(); window.deleteItem(${item.id})" title="Remove from Watchlist">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                             Remove
                         </button>
@@ -724,7 +726,7 @@
                 </div>
             </div>
             <div class="poster-info">
-                <div class="poster-title">${item.title}</div>
+                <div class="poster-title" ${onClickHtml}>${item.title}</div>
                 <div class="poster-year">${yearHtml}</div>
             </div>
             `;

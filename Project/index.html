@@ -623,43 +623,26 @@
 
         async function fetchMediaMatches(query) {
             try {
-                const tvPromise = fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`)
-                    .then(r => r.json())
-                    .catch(() => []);
-
-                const tmdbPromise = fetch(`https://api.themoviedb.org/3/search/movie?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb&query=${encodeURIComponent(query)}`)
-                    .then(r => r.json())
-                    .catch(() => ({ results: [] }));
-
-                const [tvMazeData, tmdbData] = await Promise.all([tvPromise, tmdbPromise]);
+                const response = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb&query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
                 searchLoader.style.display = 'none';
 
                 let combinedResults = [];
 
-                if (Array.isArray(tvMazeData)) {
-                    tvMazeData.forEach(item => {
-                        const show = item.show;
-                        combinedResults.push({
-                            id: 'tvm_' + show.id,
-                            title: show.name,
-                            image: show.image ? show.image.original || show.image.medium : null,
-                            year: show.premiered ? show.premiered.substring(0, 4) : 'N/A',
-                            type: show.type || 'Show',
-                            networkStr: show.webChannel ? show.webChannel.name : (show.network ? show.network.name : '')
-                        });
-                    });
-                }
-
-                if (tmdbData && Array.isArray(tmdbData.results)) {
-                    tmdbData.results.forEach(movie => {
-                        combinedResults.push({
-                            id: 'tmdb_' + movie.id,
-                            title: movie.title || movie.original_title,
-                            image: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
-                            year: movie.release_date ? movie.release_date.substring(0, 4) : 'N/A',
-                            type: 'Movie',
-                            networkStr: ''
-                        });
+                if (data && Array.isArray(data.results)) {
+                    data.results.forEach(item => {
+                        if (item.media_type === 'movie' || item.media_type === 'tv') {
+                            const isMovie = item.media_type === 'movie';
+                            combinedResults.push({
+                                id: 'tmdb_' + item.id,
+                                title: isMovie ? (item.title || item.original_title) : (item.name || item.original_name),
+                                image: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+                                year: isMovie ? (item.release_date ? item.release_date.substring(0, 4) : 'N/A') : (item.first_air_date ? item.first_air_date.substring(0, 4) : 'N/A'),
+                                type: isMovie ? 'Movie' : 'Show',
+                                networkStr: ''
+                            });
+                        }
                     });
                 }
 
@@ -696,9 +679,13 @@
                 const watchlistItem = list.find(wItem => wItem.title === item.title && wItem.year == itemYear);
 
                 let overlayContent = '';
+                
+                const rawId = item.id.replace('tmdb_', '').replace('tvm_', '');
+                const mediaType = item.type === 'Movie' ? 'movie' : 'tv';
+
                 if (watchlistItem) {
                     overlayContent = `
-                        <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="window.showAlreadyInListToast()">
+                        <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="event.stopPropagation(); window.showAlreadyInListToast()">
                             <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">In Watchlist</div>
                             <div style="font-size: 0.95rem; font-weight: 700; color: white;">${watchlistItem.platform}</div>
                             <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${watchlistItem.status.replace(/-/g, ' ')}</div>
@@ -714,7 +701,7 @@
                     else if (netLower.includes("viki")) autoPlatform = "Rakuten Viki";
 
                     overlayContent = `
-                        <select id="${platformId}" class="overlay-select">
+                        <select id="${platformId}" class="overlay-select" onclick="event.stopPropagation()">
                             <option value="Netflix" ${autoPlatform === 'Netflix' ? 'selected' : ''}>Netflix</option>
                             <option value="Prime Video" ${autoPlatform === 'Prime Video' ? 'selected' : ''}>Prime Video</option>
                             <option value="Disney+" ${autoPlatform === 'Disney+' ? 'selected' : ''}>Disney+</option>
@@ -722,26 +709,26 @@
                             <option value="Rakuten Viki" ${autoPlatform === 'Rakuten Viki' ? 'selected' : ''}>Rakuten Viki</option>
                             <option value="Other" ${autoPlatform === 'Other' ? 'selected' : ''}>Other</option>
                         </select>
-                        <select id="${statusId}" class="overlay-select">
+                        <select id="${statusId}" class="overlay-select" onclick="event.stopPropagation()">
                             <option value="Watching">Watching</option>
                             <option value="plan-to-watch">Plan to watch</option>
                             <option value="on-hold">On Hold</option>
                             <option value="watched">Watched</option>
                         </select>
-                        <button class="overlay-btn" onclick="window.addToWatchlist('${cleanTitle}', '${imageUrl}', '${item.year}', '${platformId}', '${statusId}', this)">Add to List</button>
+                        <button class="overlay-btn" onclick="event.stopPropagation(); window.addToWatchlist('${rawId}', '${mediaType}', '${cleanTitle}', '${imageUrl}', '${item.year}', '${platformId}', '${statusId}', this)">Add to List</button>
                     `;
                 }
 
                 return `
                 <div class="poster-card">
-                    <div class="poster-wrapper">
+                    <div class="poster-wrapper" style="cursor: pointer;" onclick="window.location.href='details.html?id=${rawId}&type=${mediaType}'">
                         <img src="${imageUrl}" class="poster-image" alt="${cleanTitle}" loading="lazy" onerror="this.src='${defaultImg}'">
                         <div class="poster-overlay">
                             ${overlayContent}
                         </div>
                     </div>
                     <div class="poster-info">
-                        <div class="poster-title">${item.title}</div>
+                        <div class="poster-title" style="cursor: pointer;" onclick="window.location.href='details.html?id=${rawId}&type=${mediaType}'">${item.title}</div>
                         <div class="poster-year">${item.year} • ${item.type}</div>
                         ${availableOnHtml}
                     </div>
@@ -762,7 +749,7 @@
             setTimeout(() => { infoToast.classList.remove('show'); }, 3000);
         }
 
-        window.addToWatchlist = async function (title, image, year, platformSelectId, statusSelectId, btnElement) {
+        window.addToWatchlist = async function (tmdbId, mediaType, title, image, year, platformSelectId, statusSelectId, btnElement) {
             if (!currentUser) {
                 window.location.href = "login.html";
                 return;
@@ -779,6 +766,8 @@
 
             const mediaObj = {
                 id: Date.now(),
+                tmdbId,
+                mediaType,
                 title,
                 platform,
                 status,
@@ -793,7 +782,7 @@
 
             const overlayDiv = btnElement.parentElement;
             overlayDiv.innerHTML = `
-                <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="window.showAlreadyInListToast()">
+                <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="event.stopPropagation(); window.showAlreadyInListToast()">
                     <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Added</div>
                     <div style="font-size: 0.95rem; font-weight: 700; color: white;">${platform}</div>
                     <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${status.replace(/-/g, ' ')}</div>
