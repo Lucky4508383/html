@@ -625,7 +625,7 @@
             try {
                 const response = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb&query=${encodeURIComponent(query)}`);
                 const data = await response.json();
-                
+
                 searchLoader.style.display = 'none';
 
                 let combinedResults = [];
@@ -679,7 +679,7 @@
                 const watchlistItem = list.find(wItem => wItem.title === item.title && wItem.year == itemYear);
 
                 let overlayContent = '';
-                
+
                 const rawId = item.id.replace('tmdb_', '').replace('tvm_', '');
                 const mediaType = item.type === 'Movie' ? 'movie' : 'tv';
 

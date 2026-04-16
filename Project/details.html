@@ -15,7 +15,7 @@
             --bg-glass: rgba(20, 20, 25, 0.65);
             --bg-glass-hover: rgba(30, 30, 35, 0.8);
             --border-glass: rgba(255, 255, 255, 0.08);
-            --text-main: #f8fafc;               
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
         }
 
@@ -291,6 +291,26 @@
             box-shadow: 0 0 8px var(--primary-glow);
         }
 
+        .expand-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+            margin-left: auto;
+            font-family: inherit;
+        }
+
+        .expand-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
         /* Horizontal Scroll Containers */
         .h-scroll {
             display: flex;
@@ -299,6 +319,11 @@
             padding-bottom: 20px;
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+
+        .h-scroll.extended {
+            flex-wrap: wrap;
+            overflow-x: visible;
         }
 
         .h-scroll::-webkit-scrollbar {
@@ -386,7 +411,7 @@
             text-overflow: ellipsis;
             padding: 0 4px;
         }
-        
+
         .video-type {
             font-size: 0.8rem;
             color: var(--primary);
@@ -682,6 +707,22 @@
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
+            document.querySelectorAll('.section-title').forEach(title => {
+                const nextEl = title.nextElementSibling;
+                if (nextEl && nextEl.classList.contains('h-scroll')) {
+                    const expandBtn = document.createElement('button');
+                    expandBtn.className = 'expand-btn';
+                    expandBtn.innerText = 'Show All';
+                    title.appendChild(expandBtn);
+
+                    expandBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        nextEl.classList.toggle('extended');
+                        expandBtn.innerText = nextEl.classList.contains('extended') ? 'Collapse' : 'Show All';
+                    });
+                }
+            });
+
             const urlParams = new URLSearchParams(window.location.search);
             const tmdbId = urlParams.get('id');
             const mediaType = urlParams.get('type') || 'movie';
