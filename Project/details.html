@@ -356,18 +356,44 @@
         /* Video Card */
         .video-card {
             flex: 0 0 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .video-wrapper {
+            width: 100%;
+            aspect-ratio: 16/9;
             border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--border-glass);
             background: #111;
-            aspect-ratio: 16/9;
             position: relative;
         }
 
-        .video-card iframe {
+        .video-wrapper iframe {
             width: 100%;
             height: 100%;
             border: none;
+        }
+
+        .video-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 4px;
+        }
+        
+        .video-type {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 500;
+            text-transform: uppercase;
+            padding: 0 4px;
+            margin-top: -6px;
         }
 
         /* Episodes */
@@ -537,9 +563,8 @@
     </div>
 
     <nav class="navbar">
-        <a href="home.html" class="brand">Watchlist</a>
+        <a href="index.html" class="brand">Watchlist</a>
         <div class="nav-links">
-            <a href="home.html" class="nav-link">Home</a>
             <a href="index.html" class="nav-link">Search</a>
             <a href="watchlist.html" class="nav-link">Dashboard</a>
             <a href="login.html" class="nav-link" id="authLink">Sign In</a>
@@ -610,10 +635,11 @@
             </div>
         </section>
 
-        <section class="content-section" id="similarSection" style="display:none;">
-            <h2 class="section-title">You Might Also Like</h2>
-            <div class="h-scroll" id="similarContainer"></div>
+        <section class="content-section" id="relatedSection" style="display:none;">
+            <h2 class="section-title">Related Content</h2>
+            <div class="h-scroll" id="relatedContainer"></div>
         </section>
+
     </div>
 
     <script type="module">
@@ -667,7 +693,7 @@
             }
 
             try {
-                const response = await fetch(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}?append_to_response=credits,reviews,videos,similar&api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb`);
+                const response = await fetch(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}?append_to_response=credits,reviews,videos,similar,recommendations&api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb`);
                 if (!response.ok) throw new Error("Failed to fetch");
                 const data = await response.json();
 
@@ -679,7 +705,8 @@
                 renderCast(data.credits?.cast);
                 renderVideos(data.videos?.results);
                 if (mediaType === 'tv') renderSeasons(data.seasons);
-                renderSimilar(data.similar?.results, mediaType);
+                const relatedItems = (data.recommendations?.results?.length > 0) ? data.recommendations.results : data.similar?.results;
+                renderRelated(relatedItems);
 
                 pageLoader.style.display = 'none';
                 appContent.style.display = 'block';
@@ -752,7 +779,7 @@
             const container = document.getElementById('castContainer');
             const defaultMug = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
 
-            const html = castArray.slice(0, 15).map(person => {
+            const html = castArray.map(person => {
                 const img = person.profile_path ? `https://image.tmdb.org/t/p/w200${person.profile_path}` : defaultMug;
                 return `
                 <div class="cast-card">
@@ -768,18 +795,63 @@
         }
 
         function renderVideos(videoArray) {
-            if (!videoArray) return;
-            const validTrailers = videoArray.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')).slice(0, 3);
-            if (validTrailers.length === 0) return;
+            if (!videoArray || videoArray.length === 0) return;
+
+            // Define importance order
+            const typeScore = {
+                'Trailer': 10,
+                'Teaser': 8,
+                'Opening Credits': 7,
+                'Ending Credits': 6,
+                'Behind the Scenes': 5,
+                'Featurette': 4,
+                'Clip': 3,
+                'Bloopers': 2
+            };
+
+            let validVideos = videoArray
+                .filter(v => v.site === 'YouTube' && typeScore[v.type] !== undefined)
+                .sort((a, b) => typeScore[b.type] - typeScore[a.type]);
+
+            if (validVideos.length === 0) return;
 
             document.getElementById('videoSection').style.display = 'block';
             const container = document.getElementById('videoContainer');
 
-            const html = validTrailers.map(vid => `
+            const html = validVideos.map(vid => `
                 <div class="video-card">
-                    <iframe src="https://www.youtube.com/embed/${vid.key}" allowfullscreen></iframe>
+                    <div class="video-wrapper">
+                        <iframe src="https://www.youtube.com/embed/${vid.key}" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-title" title="${vid.name.replace(/"/g, '&quot;')}">${vid.name}</div>
+                    <div class="video-type">${vid.type}</div>
                 </div>
             `).join('');
+            container.innerHTML = html;
+        }
+
+        function renderRelated(relatedArray) {
+            if (!relatedArray || relatedArray.length === 0) return;
+            document.getElementById('relatedSection').style.display = 'block';
+
+            const container = document.getElementById('relatedContainer');
+            const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
+
+            const html = relatedArray.map(item => {
+                const img = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : defaultImg;
+                const year = (item.release_date || item.first_air_date || '').substring(0, 4) || 'N/A';
+                const title = item.title || item.name;
+                const type = item.media_type || currentMediaObj._type;
+                return `
+                <div class="poster-card" onclick="window.location.href='details.html?id=${item.id}&type=${type}'">
+                    <div class="poster-wrapper">
+                        <img src="${img}" alt="${title.replace(/"/g, '&quot;')}" onerror="this.src='${defaultImg}'">
+                    </div>
+                    <div class="poster-title">${title}</div>
+                    <div class="poster-year">${year}</div>
+                </div>
+                `;
+            }).join('');
             container.innerHTML = html;
         }
 
@@ -859,29 +931,6 @@
             }
         };
 
-        function renderSimilar(similarArray, type) {
-            if (!similarArray || similarArray.length === 0) return;
-            document.getElementById('similarSection').style.display = 'block';
-
-            const container = document.getElementById('similarContainer');
-            const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
-
-            const html = similarArray.slice(0, 10).map(item => {
-                const img = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : defaultImg;
-                const title = type === 'movie' ? (item.title || item.original_title) : (item.name || item.original_name);
-                const year = type === 'movie' ? (item.release_date?.substring(0, 4)) : (item.first_air_date?.substring(0, 4));
-                return `
-                <div class="poster-card" onclick="window.location.href='details.html?id=${item.id}&type=${type}'">
-                    <div class="poster-wrapper">
-                        <img src="${img}" alt="${title}" onerror="this.src='${defaultImg}'">
-                    </div>
-                    <div class="poster-title">${title}</div>
-                    <div class="poster-year">${year || 'N/A'}</div>
-                </div>
-                `;
-            }).join('');
-            container.innerHTML = html;
-        }
 
         function updateWatchlistUI() {
             if (!currentMediaObj) return;
