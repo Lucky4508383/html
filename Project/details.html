@@ -270,6 +270,13 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 60px 40px;
+            transition: max-width 0.3s ease, padding 0.3s ease;
+        }
+
+        .content-section.expanded-mode {
+            max-width: 100%;
+            padding-top: 100px;
+            min-height: 100vh;
         }
 
         .section-title {
@@ -739,6 +746,7 @@
                         
                         if (isExpanding) {
                             nextEl.classList.add('extended');
+                            currentSection.classList.add('expanded-mode');
                             expandBtn.innerHTML = '<span style="font-size: 1.1em; margin-right: 4px;">&larr;</span> Back';
                             expandBtn.style.background = 'var(--primary)';
                             expandBtn.style.borderColor = 'var(--primary)';
@@ -754,6 +762,7 @@
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                         } else {
                             nextEl.classList.remove('extended');
+                            currentSection.classList.remove('expanded-mode');
                             expandBtn.innerText = 'Show All';
                             expandBtn.style.background = '';
                             expandBtn.style.borderColor = '';
