@@ -270,15 +270,9 @@
         }
 
         .poster-grid.extended {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
             overflow-x: visible;
-        }
-
-        @media (min-width: 1200px) {
-            .poster-grid.extended {
-                grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-            }
         }
 
         .poster-card {
@@ -287,16 +281,12 @@
             gap: 12px;
             position: relative;
             animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-            width: 100%;
-        }
-
-        .poster-grid:not(.extended) .poster-card {
             width: 180px;
             flex-shrink: 0;
         }
 
         @media (min-width: 1200px) {
-            .poster-grid:not(.extended) .poster-card {
+            .poster-card {
                 width: 210px;
             }
         }
@@ -351,7 +341,6 @@
         }
 
         .poster-wrapper:hover {
-            transform: translateY(-8px) scale(1.02);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
             z-index: 10;
         }
@@ -570,8 +559,11 @@
                 display: none;
             }
 
+            .poster-card {
+                width: 150px;
+            }
+
             .poster-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
                 gap: 15px;
             }
 
@@ -626,10 +618,16 @@
         <div class="category-row">
             <div class="category-header">
                 <h3 style="color: #ff3366;">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                        <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                        </path>
+                    </svg>
                     Favorites
                 </h3>
-                <span class="count-badge" id="count-favorites" style="border-color: rgba(255, 51, 102, 0.3); color: #ff3366; background: rgba(255, 51, 102, 0.1);">0</span>
+                <span class="count-badge" id="count-favorites"
+                    style="border-color: rgba(255, 51, 102, 0.3); color: #ff3366; background: rgba(255, 51, 102, 0.1);">0</span>
             </div>
             <div class="poster-grid" id="list-favorites">
                 <div class="empty-state">No favorites yet</div>
@@ -639,7 +637,8 @@
         <div class="category-row">
             <div class="category-header">
                 <h3 style="color: #eab308;">Watching</h3>
-                <span class="count-badge" id="count-Watching" style="border-color: rgba(234, 179, 8, 0.3); color: #eab308; background: rgba(234, 179, 8, 0.1);">0</span>
+                <span class="count-badge" id="count-Watching"
+                    style="border-color: rgba(234, 179, 8, 0.3); color: #eab308; background: rgba(234, 179, 8, 0.1);">0</span>
             </div>
             <div class="poster-grid" id="list-Watching">
                 <div class="empty-state">No items yet</div>
@@ -649,7 +648,8 @@
         <div class="category-row">
             <div class="category-header">
                 <h3 style="color: #ef4444;">Plan to Watch</h3>
-                <span class="count-badge" id="count-plan-to-watch" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444; background: rgba(239, 68, 68, 0.1);">0</span>
+                <span class="count-badge" id="count-plan-to-watch"
+                    style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444; background: rgba(239, 68, 68, 0.1);">0</span>
             </div>
             <div class="poster-grid" id="list-plan-to-watch">
                 <div class="empty-state">No items yet</div>
@@ -659,7 +659,8 @@
         <div class="category-row">
             <div class="category-header">
                 <h3 style="color: #6b7280;">On Hold</h3>
-                <span class="count-badge" id="count-on-hold" style="border-color: rgba(107, 114, 128, 0.3); color: #6b7280; background: rgba(107, 114, 128, 0.1);">0</span>
+                <span class="count-badge" id="count-on-hold"
+                    style="border-color: rgba(107, 114, 128, 0.3); color: #6b7280; background: rgba(107, 114, 128, 0.1);">0</span>
             </div>
             <div class="poster-grid" id="list-on-hold">
                 <div class="empty-state">No items yet</div>
@@ -669,7 +670,8 @@
         <div class="category-row">
             <div class="category-header">
                 <h3 style="color: #22c55e;">Watched</h3>
-                <span class="count-badge" id="count-watched" style="border-color: rgba(34, 197, 94, 0.3); color: #22c55e; background: rgba(34, 197, 94, 0.1);">0</span>
+                <span class="count-badge" id="count-watched"
+                    style="border-color: rgba(34, 197, 94, 0.3); color: #22c55e; background: rgba(34, 197, 94, 0.1);">0</span>
             </div>
             <div class="poster-grid" id="list-watched">
                 <div class="empty-state">No items yet</div>
@@ -740,22 +742,22 @@
                     const currentRow = header.closest('.category-row');
                     const grid = currentRow.querySelector('.poster-grid');
                     const isExpanding = !grid.classList.contains('extended');
-                    
+
                     if (isExpanding) {
                         grid.classList.add('extended');
                         expandBtn.innerHTML = '<span style="font-size: 1.1em; margin-right: 4px;">&larr;</span> Back';
                         expandBtn.style.background = 'var(--primary)';
                         expandBtn.style.borderColor = 'var(--primary)';
-                        
+
                         // Hide everything else
                         document.querySelectorAll('.category-row').forEach(row => {
                             if (row !== currentRow) row.style.display = 'none';
                         });
                         const topHeader = document.querySelector('.header-section');
-                        if(topHeader) topHeader.style.display = 'none';
+                        if (topHeader) topHeader.style.display = 'none';
                         const filters = document.getElementById('platformFilters');
-                        if(filters) filters.style.display = 'none';
-                        
+                        if (filters) filters.style.display = 'none';
+
                         // Scroll to top
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     } else {
@@ -763,16 +765,16 @@
                         expandBtn.innerText = 'Show All';
                         expandBtn.style.background = '';
                         expandBtn.style.borderColor = '';
-                        
+
                         // Restore everything
                         document.querySelectorAll('.category-row').forEach(row => {
                             row.style.display = 'block';
                         });
                         const topHeader = document.querySelector('.header-section');
-                        if(topHeader) topHeader.style.display = 'flex';
+                        if (topHeader) topHeader.style.display = 'flex';
                         const filters = document.getElementById('platformFilters');
-                        if(filters) filters.style.display = 'flex';
-                        
+                        if (filters) filters.style.display = 'flex';
+
                         // Scroll back to the row slightly above
                         const y = currentRow.getBoundingClientRect().top + window.scrollY - 100;
                         window.scrollTo({ top: y, behavior: 'smooth' });
@@ -992,7 +994,7 @@
                     counts.push(0);
                 }
             });
-            
+
             // Favorites count
             const favContainer = document.getElementById('list-favorites');
             const favCounter = document.getElementById('count-favorites');
