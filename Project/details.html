@@ -643,9 +643,13 @@
                             </svg>
                             Add to List
                         </button>
-                        <button class="action-btn fav-btn" id="favBtn" title="Add to Favorites" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: none; padding: 14px;">
-                            <svg id="favIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        <button class="action-btn fav-btn" id="favBtn" title="Add to Favorites"
+                            style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: none; padding: 14px;">
+                            <svg id="favIcon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                                </path>
                             </svg>
                         </button>
                     </div>
@@ -743,22 +747,22 @@
                         e.stopPropagation();
                         const currentSection = title.closest('.content-section');
                         const isExpanding = !nextEl.classList.contains('extended');
-                        
+
                         if (isExpanding) {
                             nextEl.classList.add('extended');
                             currentSection.classList.add('expanded-mode');
                             expandBtn.innerHTML = '<span style="font-size: 1.1em; margin-right: 4px;">&larr;</span> Back';
                             expandBtn.style.background = 'var(--primary)';
                             expandBtn.style.borderColor = 'var(--primary)';
-                            
+
                             // Hide everything else
                             const hero = document.querySelector('.hero-section');
                             if (hero) hero.classList.add('hidden-by-isolation');
-                            
+
                             document.querySelectorAll('.content-section').forEach(sec => {
                                 if (sec !== currentSection) sec.classList.add('hidden-by-isolation');
                             });
-                            
+
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                         } else {
                             nextEl.classList.remove('extended');
@@ -766,15 +770,15 @@
                             expandBtn.innerText = 'Show All';
                             expandBtn.style.background = '';
                             expandBtn.style.borderColor = '';
-                            
+
                             // Restore everything
                             const hero = document.querySelector('.hero-section');
                             if (hero) hero.classList.remove('hidden-by-isolation');
-                            
+
                             document.querySelectorAll('.content-section').forEach(sec => {
                                 sec.classList.remove('hidden-by-isolation');
                             });
-                            
+
                             const y = currentSection.getBoundingClientRect().top + window.scrollY - 100;
                             window.scrollTo({ top: y, behavior: 'smooth' });
                         }
@@ -1069,7 +1073,7 @@
                 }
                 const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
                 const image = currentMediaObj.poster_path ? `https://image.tmdb.org/t/p/w500${currentMediaObj.poster_path}` : defaultImg;
-                
+
                 const existingIndex = windowUserFavorites.findIndex(f => f.tmdbId == currentMediaObj._myId || (f.title === title && f.year == itemYear));
                 if (existingIndex > -1) {
                     // Remove from fav
@@ -1085,7 +1089,7 @@
                         year: itemYear
                     });
                 }
-                
+
                 // Optimistically update UI
                 updateWatchlistUI();
 

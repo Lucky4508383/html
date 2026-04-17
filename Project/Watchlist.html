@@ -314,6 +314,7 @@
         .poster-grid.extended {
             display: flex;
             flex-wrap: wrap;
+            justify-content: center;
             overflow-x: visible;
         }
 
@@ -806,7 +807,7 @@
                     const grid = currentExpandedRow.querySelector('.poster-grid');
                     grid.classList.remove('extended');
                     document.querySelector('.container').classList.remove('expanded-mode');
-                    
+
                     const expandBtn = currentExpandedRow.querySelector('.expand-btn');
                     if (expandBtn) expandBtn.style.display = 'block';
 
@@ -835,10 +836,10 @@
                     e.stopPropagation();
                     const currentRow = header.closest('.category-row');
                     const grid = currentRow.querySelector('.poster-grid');
-                    
+
                     grid.classList.add('extended');
                     document.querySelector('.container').classList.add('expanded-mode');
-                    
+
                     expandBtn.style.display = 'none'; // Hide inline expand button
                     currentExpandedRow = currentRow;
                     globalBackBar.classList.add('active'); // Show global back bar
