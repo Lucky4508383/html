@@ -143,6 +143,7 @@
         .back-bar {
             display: none;
             align-items: center;
+            justify-content: flex-end;
             margin-bottom: 30px;
             width: 100%;
         }
@@ -648,12 +649,6 @@
             </div>
         </div>
 
-        <div class="back-bar" id="globalBackBar">
-            <button class="back-btn-global" id="globalBackBtn">
-                <span style="font-size: 1.2em;">&larr;</span> Back
-            </button>
-        </div>
-
         <div class="platform-filters" id="platformFilters">
             <button class="filter-pill active" data-platform="All">All Platforms</button>
             <button class="filter-pill" data-platform="Netflix">Netflix</button>
@@ -799,32 +794,6 @@
                 });
             });
 
-            const globalBackBtn = document.getElementById('globalBackBtn');
-            const globalBackBar = document.getElementById('globalBackBar');
-
-            globalBackBtn.addEventListener('click', () => {
-                if (currentExpandedRow) {
-                    const grid = currentExpandedRow.querySelector('.poster-grid');
-                    grid.classList.remove('extended');
-                    document.querySelector('.container').classList.remove('expanded-mode');
-
-                    const expandBtn = currentExpandedRow.querySelector('.expand-btn');
-                    if (expandBtn) expandBtn.style.display = 'block';
-
-                    currentExpandedRow = null;
-                    globalBackBar.classList.remove('active');
-
-                    // Restore everything
-                    document.querySelectorAll('.category-row').forEach(row => {
-                        row.style.display = 'block';
-                    });
-                    const topHeader = document.querySelector('.header-section');
-                    if (topHeader) topHeader.style.display = 'flex';
-
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            });
-
             const categoryHeaders = document.querySelectorAll('.category-header');
             categoryHeaders.forEach(header => {
                 const expandBtn = document.createElement('button');
@@ -836,23 +805,46 @@
                     e.stopPropagation();
                     const currentRow = header.closest('.category-row');
                     const grid = currentRow.querySelector('.poster-grid');
+                    const isExpanding = !grid.classList.contains('extended');
 
-                    grid.classList.add('extended');
-                    document.querySelector('.container').classList.add('expanded-mode');
+                    if (isExpanding) {
+                        grid.classList.add('extended');
+                        document.querySelector('.container').classList.add('expanded-mode');
 
-                    expandBtn.style.display = 'none'; // Hide inline expand button
-                    currentExpandedRow = currentRow;
-                    globalBackBar.classList.add('active'); // Show global back bar
+                        expandBtn.innerHTML = '<span style="font-size: 1.1em; margin-right: 4px;">&larr;</span> Back';
+                        expandBtn.style.background = 'var(--primary)';
+                        expandBtn.style.borderColor = 'var(--primary)';
 
-                    // Hide everything else except filters
-                    document.querySelectorAll('.category-row').forEach(row => {
-                        if (row !== currentRow) row.style.display = 'none';
-                    });
-                    const topHeader = document.querySelector('.header-section');
-                    if (topHeader) topHeader.style.display = 'none';
+                        currentExpandedRow = currentRow;
 
-                    // Scroll to top
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                        // Hide everything else except filters
+                        document.querySelectorAll('.category-row').forEach(row => {
+                            if (row !== currentRow) row.style.display = 'none';
+                        });
+                        const topHeader = document.querySelector('.header-section');
+                        if (topHeader) topHeader.style.display = 'none';
+
+                        // Scroll to top
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        grid.classList.remove('extended');
+                        document.querySelector('.container').classList.remove('expanded-mode');
+
+                        expandBtn.innerText = 'Show All';
+                        expandBtn.style.background = '';
+                        expandBtn.style.borderColor = '';
+
+                        currentExpandedRow = null;
+
+                        // Restore everything
+                        document.querySelectorAll('.category-row').forEach(row => {
+                            row.style.display = 'block';
+                        });
+                        const topHeader = document.querySelector('.header-section');
+                        if (topHeader) topHeader.style.display = 'flex';
+
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                 });
             });
         });
