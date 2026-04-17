@@ -636,6 +636,11 @@
                             </svg>
                             Add to List
                         </button>
+                        <button class="action-btn fav-btn" id="favBtn" title="Add to Favorites" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: none; padding: 14px;">
+                            <svg id="favIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -672,6 +677,7 @@
 
         let currentUser = null;
         let windowUserWatchlist = [];
+        let windowUserFavorites = [];
         let currentMediaObj = null; // Store fetched data
 
         const pageLoader = document.getElementById('pageLoader');
@@ -690,15 +696,18 @@
 
                 try {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if (userDoc.exists() && userDoc.data().watchlist) {
-                        windowUserWatchlist = userDoc.data().watchlist;
+                    if (userDoc.exists()) {
+                        const data = userDoc.data();
+                        if (data.watchlist) windowUserWatchlist = data.watchlist;
+                        if (data.favorites) windowUserFavorites = data.favorites;
                     }
                 } catch (e) {
-                    console.error("Error fetching watchlist", e);
+                    console.error("Error fetching watchlist/favorites", e);
                 }
             } else {
                 currentUser = null;
                 windowUserWatchlist = [];
+                windowUserFavorites = [];
                 authLink.textContent = "Sign In";
                 authLink.href = "login.html";
                 authLink.onclick = null;
@@ -707,6 +716,14 @@
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
+            // Add isolation style if not present
+            if (!document.getElementById('isolationStyle')) {
+                const style = document.createElement('style');
+                style.id = 'isolationStyle';
+                style.innerHTML = '.hidden-by-isolation { display: none !important; }';
+                document.head.appendChild(style);
+            }
+
             document.querySelectorAll('.section-title').forEach(title => {
                 const nextEl = title.nextElementSibling;
                 if (nextEl && nextEl.classList.contains('h-scroll')) {
@@ -717,8 +734,41 @@
 
                     expandBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        nextEl.classList.toggle('extended');
-                        expandBtn.innerText = nextEl.classList.contains('extended') ? 'Collapse' : 'Show All';
+                        const currentSection = title.closest('.content-section');
+                        const isExpanding = !nextEl.classList.contains('extended');
+                        
+                        if (isExpanding) {
+                            nextEl.classList.add('extended');
+                            expandBtn.innerHTML = '<span style="font-size: 1.1em; margin-right: 4px;">&larr;</span> Back';
+                            expandBtn.style.background = 'var(--primary)';
+                            expandBtn.style.borderColor = 'var(--primary)';
+                            
+                            // Hide everything else
+                            const hero = document.querySelector('.hero-section');
+                            if (hero) hero.classList.add('hidden-by-isolation');
+                            
+                            document.querySelectorAll('.content-section').forEach(sec => {
+                                if (sec !== currentSection) sec.classList.add('hidden-by-isolation');
+                            });
+                            
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
+                            nextEl.classList.remove('extended');
+                            expandBtn.innerText = 'Show All';
+                            expandBtn.style.background = '';
+                            expandBtn.style.borderColor = '';
+                            
+                            // Restore everything
+                            const hero = document.querySelector('.hero-section');
+                            if (hero) hero.classList.remove('hidden-by-isolation');
+                            
+                            document.querySelectorAll('.content-section').forEach(sec => {
+                                sec.classList.remove('hidden-by-isolation');
+                            });
+                            
+                            const y = currentSection.getBoundingClientRect().top + window.scrollY - 100;
+                            window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
                     });
                 }
             });
@@ -984,8 +1034,58 @@
             const watchlistItem = windowUserWatchlist.find(w => w.tmdbId == currentMediaObj._myId || (w.title === title && w.year == itemYear));
 
             const btn = document.getElementById('addBtn');
+            const favBtn = document.getElementById('favBtn');
+            const favIcon = document.getElementById('favIcon');
             const platSelect = document.getElementById('platformSelect');
             const statSelect = document.getElementById('statusSelect');
+
+            // Handle Favorite Button
+            const isFav = windowUserFavorites.some(f => f.tmdbId == currentMediaObj._myId || (f.title === title && f.year == itemYear));
+            if (isFav) {
+                favIcon.setAttribute('fill', 'var(--primary)');
+                favIcon.setAttribute('stroke', 'var(--primary)');
+                favBtn.style.background = 'rgba(237, 28, 36, 0.1)';
+                favBtn.style.borderColor = 'rgba(237, 28, 36, 0.3)';
+            } else {
+                favIcon.setAttribute('fill', 'none');
+                favIcon.setAttribute('stroke', 'currentColor');
+                favBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+                favBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            }
+
+            favBtn.onclick = async () => {
+                if (!currentUser) {
+                    window.location.href = "login.html";
+                    return;
+                }
+                const defaultImg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4=';
+                const image = currentMediaObj.poster_path ? `https://image.tmdb.org/t/p/w500${currentMediaObj.poster_path}` : defaultImg;
+                
+                const existingIndex = windowUserFavorites.findIndex(f => f.tmdbId == currentMediaObj._myId || (f.title === title && f.year == itemYear));
+                if (existingIndex > -1) {
+                    // Remove from fav
+                    windowUserFavorites.splice(existingIndex, 1);
+                } else {
+                    // Add to fav
+                    windowUserFavorites.push({
+                        id: Date.now(),
+                        tmdbId: currentMediaObj._myId,
+                        mediaType: currentMediaObj._type,
+                        title,
+                        image,
+                        year: itemYear
+                    });
+                }
+                
+                // Optimistically update UI
+                updateWatchlistUI();
+
+                try {
+                    await setDoc(doc(db, "users", currentUser.uid), { favorites: windowUserFavorites }, { merge: true });
+                } catch (e) {
+                    console.error("Error saving favorites to Firestore", e);
+                }
+            };
 
             if (watchlistItem) {
                 platSelect.style.display = 'none';
