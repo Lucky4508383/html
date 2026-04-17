@@ -135,9 +135,44 @@
 
         .container.expanded-mode {
             max-width: 100%;
-            padding: 40px 40px;
+            padding: 20px 40px;
             min-height: calc(100vh - 70px);
         }
+
+        /* Top Back Bar for Expanded Mode */
+        .back-bar {
+            display: none;
+            align-items: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        .back-bar.active {
+            display: flex;
+        }
+
+        .back-btn-global {
+            background: rgba(237, 28, 36, 0.15);
+            border: 1px solid var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn-global:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+        }
+
+
 
         .header-section {
             display: flex;
@@ -612,6 +647,12 @@
             </div>
         </div>
 
+        <div class="back-bar" id="globalBackBar">
+            <button class="back-btn-global" id="globalBackBtn">
+                <span style="font-size: 1.2em;">&larr;</span> Back
+            </button>
+        </div>
+
         <div class="platform-filters" id="platformFilters">
             <button class="filter-pill active" data-platform="All">All Platforms</button>
             <button class="filter-pill" data-platform="Netflix">Netflix</button>
@@ -620,6 +661,12 @@
             <button class="filter-pill" data-platform="Crunchyroll">Crunchyroll</button>
             <button class="filter-pill" data-platform="Rakuten Viki">Rakuten Viki</button>
             <button class="filter-pill" data-platform="Other">Other</button>
+        </div>
+
+        <div class="platform-filters" id="typeFilters" style="margin-top: -20px; margin-bottom: 50px;">
+            <button class="filter-pill active" data-type="All">Movies & Series</button>
+            <button class="filter-pill" data-type="movie">Movies Only</button>
+            <button class="filter-pill" data-type="tv">Series Only</button>
         </div>
 
         <div class="category-row">
@@ -694,6 +741,8 @@
         let windowUserWatchlist = [];
         let windowUserFavorites = [];
         let currentPlatformFilter = 'All';
+        let currentTypeFilter = 'All';
+        let currentExpandedRow = null;
 
         onAuthStateChanged(auth, async (user) => {
             const authLink = document.getElementById('authLink');
@@ -727,16 +776,54 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateCounts();
 
-            const filterPills = document.querySelectorAll('.filter-pill');
-            filterPills.forEach(pill => {
+            const platformPills = document.querySelectorAll('#platformFilters .filter-pill');
+            platformPills.forEach(pill => {
                 pill.addEventListener('click', (e) => {
-                    filterPills.forEach(p => p.classList.remove('active'));
+                    platformPills.forEach(p => p.classList.remove('active'));
                     const target = e.currentTarget;
                     target.classList.add('active');
                     currentPlatformFilter = target.dataset.platform;
                     refreshDashboard();
                 });
             });
+
+            const typePills = document.querySelectorAll('#typeFilters .filter-pill');
+            typePills.forEach(pill => {
+                pill.addEventListener('click', (e) => {
+                    typePills.forEach(p => p.classList.remove('active'));
+                    const target = e.currentTarget;
+                    target.classList.add('active');
+                    currentTypeFilter = target.dataset.type;
+                    refreshDashboard();
+                });
+            });
+
+            const globalBackBtn = document.getElementById('globalBackBtn');
+            const globalBackBar = document.getElementById('globalBackBar');
+
+            globalBackBtn.addEventListener('click', () => {
+                if (currentExpandedRow) {
+                    const grid = currentExpandedRow.querySelector('.poster-grid');
+                    grid.classList.remove('extended');
+                    document.querySelector('.container').classList.remove('expanded-mode');
+                    
+                    const expandBtn = currentExpandedRow.querySelector('.expand-btn');
+                    if (expandBtn) expandBtn.style.display = 'block';
+
+                    currentExpandedRow = null;
+                    globalBackBar.classList.remove('active');
+
+                    // Restore everything
+                    document.querySelectorAll('.category-row').forEach(row => {
+                        row.style.display = 'block';
+                    });
+                    const topHeader = document.querySelector('.header-section');
+                    if (topHeader) topHeader.style.display = 'flex';
+
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+
             const categoryHeaders = document.querySelectorAll('.category-header');
             categoryHeaders.forEach(header => {
                 const expandBtn = document.createElement('button');
@@ -748,46 +835,23 @@
                     e.stopPropagation();
                     const currentRow = header.closest('.category-row');
                     const grid = currentRow.querySelector('.poster-grid');
-                    const isExpanding = !grid.classList.contains('extended');
+                    
+                    grid.classList.add('extended');
+                    document.querySelector('.container').classList.add('expanded-mode');
+                    
+                    expandBtn.style.display = 'none'; // Hide inline expand button
+                    currentExpandedRow = currentRow;
+                    globalBackBar.classList.add('active'); // Show global back bar
 
-                    if (isExpanding) {
-                        grid.classList.add('extended');
-                        document.querySelector('.container').classList.add('expanded-mode');
-                        expandBtn.innerHTML = '<span style="font-size: 1.1em; margin-right: 4px;">&larr;</span> Back';
-                        expandBtn.style.background = 'var(--primary)';
-                        expandBtn.style.borderColor = 'var(--primary)';
+                    // Hide everything else except filters
+                    document.querySelectorAll('.category-row').forEach(row => {
+                        if (row !== currentRow) row.style.display = 'none';
+                    });
+                    const topHeader = document.querySelector('.header-section');
+                    if (topHeader) topHeader.style.display = 'none';
 
-                        // Hide everything else
-                        document.querySelectorAll('.category-row').forEach(row => {
-                            if (row !== currentRow) row.style.display = 'none';
-                        });
-                        const topHeader = document.querySelector('.header-section');
-                        if (topHeader) topHeader.style.display = 'none';
-                        const filters = document.getElementById('platformFilters');
-                        if (filters) filters.style.display = 'none';
-
-                        // Scroll to top
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    } else {
-                        grid.classList.remove('extended');
-                        document.querySelector('.container').classList.remove('expanded-mode');
-                        expandBtn.innerText = 'Show All';
-                        expandBtn.style.background = '';
-                        expandBtn.style.borderColor = '';
-
-                        // Restore everything
-                        document.querySelectorAll('.category-row').forEach(row => {
-                            row.style.display = 'block';
-                        });
-                        const topHeader = document.querySelector('.header-section');
-                        if (topHeader) topHeader.style.display = 'flex';
-                        const filters = document.getElementById('platformFilters');
-                        if (filters) filters.style.display = 'flex';
-
-                        // Scroll back to the row slightly above
-                        const y = currentRow.getBoundingClientRect().top + window.scrollY - 100;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                    }
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
             });
         });
@@ -978,11 +1042,18 @@
         function loadData() {
             let filteredWatchlist = windowUserWatchlist;
             if (currentPlatformFilter !== 'All') {
-                filteredWatchlist = windowUserWatchlist.filter(item => item.platform === currentPlatformFilter);
+                filteredWatchlist = filteredWatchlist.filter(item => item.platform === currentPlatformFilter);
+            }
+            if (currentTypeFilter !== 'All') {
+                filteredWatchlist = filteredWatchlist.filter(item => item.mediaType === currentTypeFilter);
             }
             filteredWatchlist.forEach(item => renderItem(item));
 
-            windowUserFavorites.forEach(item => renderFavoriteItem(item));
+            let filteredFavorites = windowUserFavorites;
+            if (currentTypeFilter !== 'All') {
+                filteredFavorites = filteredFavorites.filter(item => item.mediaType === currentTypeFilter);
+            }
+            filteredFavorites.forEach(item => renderFavoriteItem(item));
 
             updateCounts();
         }
