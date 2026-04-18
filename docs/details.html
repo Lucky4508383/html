@@ -515,6 +515,8 @@
             background-color: rgba(20, 20, 25, 0.5);
             border: 1px solid var(--border-glass);
             transition: transform 0.3s, box-shadow 0.3s;
+            will-change: transform, box-shadow;
+            transform: translateZ(0);
         }
 
         .poster-wrapper:hover {

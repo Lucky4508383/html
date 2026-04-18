@@ -29,16 +29,27 @@
             background-color: var(--bg-body);
             color: var(--text-main);
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Fixed background element for better performance */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
             /* Animated background mesh gradient */
             background-image: 
                 radial-gradient(at 0% 0%, rgba(237, 28, 36, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(237, 28, 36, 0.1) 0px, transparent 50%),
                 radial-gradient(at 0% 100%, rgba(15, 23, 42, 0.4) 0px, transparent 50%);
-            background-attachment: fixed;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            pointer-events: none;
         }
 
         .auth-container {
