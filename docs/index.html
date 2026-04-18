@@ -782,6 +782,7 @@
 
             window.showToast();
 
+            const overlayDiv = btnElement.parentElement;
             const displayStatus = status === 'Watching' ? 'Watching New' : (status === 'watching-another' ? 'Watching Another S/M' : status.replace(/-/g, ' '));
             overlayDiv.innerHTML = `
                 <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="event.stopPropagation(); window.showAlreadyInListToast()">
