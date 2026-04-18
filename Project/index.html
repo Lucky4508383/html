@@ -684,11 +684,12 @@
                 const mediaType = item.type === 'Movie' ? 'movie' : 'tv';
 
                 if (watchlistItem) {
+                    let displayStatus = watchlistItem.status === 'Watching' ? 'Watching New' : (watchlistItem.status === 'watching-another' ? 'Watching Another S/M' : watchlistItem.status.replace(/-/g, ' '));
                     overlayContent = `
                         <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="event.stopPropagation(); window.showAlreadyInListToast()">
                             <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">In Watchlist</div>
                             <div style="font-size: 0.95rem; font-weight: 700; color: white;">${watchlistItem.platform}</div>
-                            <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${watchlistItem.status.replace(/-/g, ' ')}</div>
+                            <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${displayStatus}</div>
                         </div>
                     `;
                 } else {
@@ -710,7 +711,8 @@
                             <option value="Other" ${autoPlatform === 'Other' ? 'selected' : ''}>Other</option>
                         </select>
                         <select id="${statusId}" class="overlay-select" onclick="event.stopPropagation()">
-                            <option value="Watching">Watching</option>
+                            <option value="Watching">Watching New</option>
+                            <option value="watching-another">Watching Another S/M</option>
                             <option value="plan-to-watch">Plan to watch</option>
                             <option value="on-hold">On Hold</option>
                             <option value="watched">Watched</option>
@@ -780,12 +782,12 @@
 
             window.showToast();
 
-            const overlayDiv = btnElement.parentElement;
+            const displayStatus = status === 'Watching' ? 'Watching New' : (status === 'watching-another' ? 'Watching Another S/M' : status.replace(/-/g, ' '));
             overlayDiv.innerHTML = `
                 <div style="background: rgba(20, 20, 25, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-top: 2px solid var(--primary); border-radius: 8px; padding: 12px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-top: auto;" onclick="event.stopPropagation(); window.showAlreadyInListToast()">
                     <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Added</div>
                     <div style="font-size: 0.95rem; font-weight: 700; color: white;">${platform}</div>
-                    <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${status.replace(/-/g, ' ')}</div>
+                    <div style="font-size: 0.85rem; color: var(--primary); font-weight: 500; text-transform: capitalize;">${displayStatus}</div>
                 </div>
             `;
 

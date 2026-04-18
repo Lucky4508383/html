@@ -686,11 +686,22 @@
 
         <div class="category-row">
             <div class="category-header">
-                <h3 style="color: #eab308;">Watching</h3>
+                <h3 style="color: #eab308;">Watching New</h3>
                 <span class="count-badge" id="count-Watching"
                     style="border-color: rgba(234, 179, 8, 0.3); color: #eab308; background: rgba(234, 179, 8, 0.1);">0</span>
             </div>
             <div class="poster-grid" id="list-Watching">
+                <div class="empty-state">No items yet</div>
+            </div>
+        </div>
+
+        <div class="category-row">
+            <div class="category-header">
+                <h3 style="color: #fb923c;">Watching Another S/M</h3>
+                <span class="count-badge" id="count-watching-another"
+                    style="border-color: rgba(251, 146, 60, 0.3); color: #fb923c; background: rgba(251, 146, 60, 0.1);">0</span>
+            </div>
+            <div class="poster-grid" id="list-watching-another">
                 <div class="empty-state">No items yet</div>
             </div>
         </div>
@@ -855,11 +866,12 @@
             progressChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: labels || ['Watching: 0', 'Plan to Watch: 0', 'On Hold: 0', 'Watched: 0'],
+                    labels: labels || ['Watching New: 0', 'Watching Another: 0', 'Plan to Watch: 0', 'On Hold: 0', 'Watched: 0'],
                     datasets: [{
                         data: counts,
                         backgroundColor: [
                             '#eab308', // Yellow for Watching
+                            '#fb923c', // Orange for Watching Another
                             '#ef4444', // Red for Plan to watch
                             '#6b7280', // Grey for On Hold
                             '#22c55e'  // Green for Watched
@@ -923,12 +935,13 @@
 
         function updateChart(counts) {
             const total = counts.reduce((a, b) => a + b, 0);
-            const dataCounts = total === 0 ? [0, 0, 0, 0] : counts;
+            const dataCounts = total === 0 ? [0, 0, 0, 0, 0] : counts;
             const updatedLabels = [
-                `Watching: ${dataCounts[0]}`,
-                `Plan to Watch: ${dataCounts[1]}`,
-                `On Hold: ${dataCounts[2]}`,
-                `Watched: ${dataCounts[3]}`
+                `Watching New: ${dataCounts[0]}`,
+                `Watching Another: ${dataCounts[1]}`,
+                `Plan to Watch: ${dataCounts[2]}`,
+                `On Hold: ${dataCounts[3]}`,
+                `Watched: ${dataCounts[4]}`
             ];
 
             if (progressChart) {
@@ -975,7 +988,8 @@
                             <option value="Other" ${item.platform === 'Other' ? 'selected' : ''}>Other</option>
                         </select>
                         <select class="overlay-select" onchange="event.stopPropagation(); window.updateItem(${item.id}, 'status', this.value)" onclick="event.stopPropagation()">
-                            <option value="Watching" ${item.status === 'Watching' ? 'selected' : ''}>Watching</option>
+                            <option value="Watching" ${item.status === 'Watching' ? 'selected' : ''}>Watching New</option>
+                            <option value="watching-another" ${item.status === 'watching-another' ? 'selected' : ''}>Watching Another S/M</option>
                             <option value="plan-to-watch" ${item.status === 'plan-to-watch' ? 'selected' : ''}>Plan to watch</option>
                             <option value="on-hold" ${item.status === 'on-hold' ? 'selected' : ''}>On Hold</option>
                             <option value="watched" ${item.status === 'watched' ? 'selected' : ''}>Watched</option>
@@ -1053,7 +1067,7 @@
 
         function updateCounts() {
             const counts = [];
-            ['Watching', 'plan-to-watch', 'on-hold', 'watched'].forEach(status => {
+            ['Watching', 'watching-another', 'plan-to-watch', 'on-hold', 'watched'].forEach(status => {
                 const listId = `list-${status}`;
                 const countId = `count-${status}`;
                 const container = document.getElementById(listId);
@@ -1143,7 +1157,7 @@
         }
 
         function refreshDashboard() {
-            ['list-favorites', 'list-Watching', 'list-plan-to-watch', 'list-on-hold', 'list-watched'].forEach(listId => {
+            ['list-favorites', 'list-Watching', 'list-watching-another', 'list-plan-to-watch', 'list-on-hold', 'list-watched'].forEach(listId => {
                 const container = document.getElementById(listId);
                 if (container) {
                     container.innerHTML = `<div class="empty-state">No ${listId === 'list-favorites' ? 'favorites' : 'items'} yet</div>`;
