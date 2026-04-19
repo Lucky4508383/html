@@ -637,19 +637,40 @@
                 let combinedResults = [];
 
                 if (data && Array.isArray(data.results)) {
-                    data.results.forEach(item => {
-                        if (item.media_type === 'movie' || item.media_type === 'tv') {
-                            const isMovie = item.media_type === 'movie';
-                            combinedResults.push({
-                                id: 'tmdb_' + item.id,
-                                title: isMovie ? (item.title || item.original_title) : (item.name || item.original_name),
-                                image: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
-                                year: isMovie ? (item.release_date ? item.release_date.substring(0, 4) : 'N/A') : (item.first_air_date ? item.first_air_date.substring(0, 4) : 'N/A'),
-                                type: isMovie ? 'Movie' : 'Show',
-                                networkStr: ''
-                            });
+                    let validResults = data.results.filter(item => 
+                        (item.media_type === 'movie' || item.media_type === 'tv') && item.poster_path
+                    );
+
+                    validResults.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+                    validResults = validResults.slice(0, 24);
+
+                    combinedResults = await Promise.all(validResults.map(async item => {
+                        const isMovie = item.media_type === 'movie';
+                        let networkStr = '';
+
+                        try {
+                            const vpResponse = await fetch(`https://api.themoviedb.org/3/${item.media_type}/${item.id}/watch/providers?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb`);
+                            const vpData = await vpResponse.json();
+                            
+                            const providers = vpData.results && (vpData.results.IN || vpData.results.US);
+                            if (providers && providers.flatrate) {
+                                networkStr = providers.flatrate.map(p => p.provider_name).join(', ');
+                            } else if (providers && providers.free) {
+                                networkStr = providers.free.map(p => p.provider_name).join(', ');
+                            }
+                        } catch(e) {
+                            console.error("Error fetching providers for " + item.id, e);
                         }
-                    });
+
+                        return {
+                            id: 'tmdb_' + item.id,
+                            title: isMovie ? (item.title || item.original_title) : (item.name || item.original_name),
+                            image: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+                            year: isMovie ? (item.release_date ? item.release_date.substring(0, 4) : 'N/A') : (item.first_air_date ? item.first_air_date.substring(0, 4) : 'N/A'),
+                            type: isMovie ? 'Movie' : 'Show',
+                            networkStr: networkStr
+                        };
+                    }));
                 }
 
                 if (combinedResults.length > 0) {
@@ -703,9 +724,9 @@
                     let autoPlatform = "Other";
                     if (netLower.includes("netflix")) autoPlatform = "Netflix";
                     else if (netLower.includes("amazon") || netLower.includes("prime")) autoPlatform = "Prime Video";
-                    else if (netLower.includes("disney")) autoPlatform = "Disney+";
+                    else if (netLower.includes("disney") || netLower.includes("hotstar")) autoPlatform = "Disney+";
                     else if (netLower.includes("crunchyroll")) autoPlatform = "Crunchyroll";
-                    else if (netLower.includes("viki")) autoPlatform = "Rakuten Viki";
+                    else if (netLower.includes("viki") || netLower.includes("rakuten")) autoPlatform = "Rakuten Viki";
 
                     overlayContent = `
                         <select id="${platformId}" class="overlay-select" onclick="event.stopPropagation()">
