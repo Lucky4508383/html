@@ -486,6 +486,46 @@
             justify-content: center;
         }
 
+        .fav-icon-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(20, 20, 25, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.2s ease;
+        }
+
+        .fav-icon-btn:hover {
+            background: rgba(237, 28, 36, 0.2);
+            transform: scale(1.1);
+        }
+
+        .fav-icon-btn.active {
+            color: #ed1c24;
+        }
+
+        .fav-icon-btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+            fill: none;
+        }
+
+        .fav-icon-btn.active svg {
+            fill: #ed1c24;
+            stroke: #ed1c24;
+            transform: scale(1.1);
+        }
+
         @media (max-width: 600px) {
             .navbar {
                 padding: 0 20px;
@@ -578,6 +618,7 @@
 
         let currentUser = null;
         let windowUserWatchlist = [];
+        let windowUserFavorites = [];
         let currentCombinedResults = [];
 
         onAuthStateChanged(auth, async (user) => {
@@ -595,15 +636,21 @@
 
                 try {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if (userDoc.exists() && userDoc.data().watchlist) {
-                        windowUserWatchlist = userDoc.data().watchlist;
+                    if (userDoc.exists()) {
+                        if (userDoc.data().watchlist) {
+                            windowUserWatchlist = userDoc.data().watchlist;
+                        }
+                        if (userDoc.data().favorites) {
+                            windowUserFavorites = userDoc.data().favorites;
+                        }
                     }
                 } catch (e) {
-                    console.error("Error fetching watchlist", e);
+                    console.error("Error fetching data", e);
                 }
             } else {
                 currentUser = null;
                 windowUserWatchlist = [];
+                windowUserFavorites = [];
                 authLink.textContent = "Sign In";
                 authLink.href = "login.html";
                 authLink.onclick = null;
@@ -709,6 +756,7 @@
 
                 const rawId = item.id.replace('tmdb_', '').replace('tvm_', '');
                 const mediaType = item.type === 'Movie' ? 'movie' : 'tv';
+                const isFav = windowUserFavorites.some(f => f.title === item.title && f.year == itemYear);
 
                 if (watchlistItem) {
                     let displayStatus = watchlistItem.status === 'Watching' ? 'Watching New' : (watchlistItem.status === 'watching-another' ? 'Watching Another S/M' : watchlistItem.status.replace(/-/g, ' '));
@@ -752,6 +800,11 @@
                 <div class="poster-card">
                     <div class="poster-wrapper" style="cursor: pointer;" onclick="window.location.href='details.html?id=${rawId}&type=${mediaType}'">
                         <img src="${imageUrl}" class="poster-image" alt="${cleanTitle}" loading="lazy" onerror="this.src='${defaultImg}'">
+                        <div class="fav-icon-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); window.toggleFavoriteHome('${rawId}', '${mediaType}', '${cleanTitle}', '${imageUrl}', '${item.year}', this)" title="Toggle Favorite">
+                            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </div>
                         <div class="poster-overlay">
                             ${overlayContent}
                         </div>
@@ -828,6 +881,40 @@
                 await setDoc(doc(db, "users", currentUser.uid), { watchlist: newList }, { merge: true });
             } catch (e) {
                 console.error("Error saving to Firestore", e);
+            }
+        }
+
+        window.toggleFavoriteHome = async function (tmdbId, mediaType, title, image, year, btnElement) {
+            if (!currentUser) {
+                window.location.href = "login.html";
+                return;
+            }
+            
+            const itemYear = year !== 'N/A' ? year : null;
+            const existingIndex = windowUserFavorites.findIndex(f => f.title === title && f.year == itemYear);
+
+            if (existingIndex > -1) {
+                // Remove from favorites
+                windowUserFavorites.splice(existingIndex, 1);
+                btnElement.classList.remove('active');
+            } else {
+                // Add to favorites
+                const favObj = {
+                    id: Date.now(),
+                    tmdbId,
+                    mediaType,
+                    title,
+                    image,
+                    year: itemYear
+                };
+                windowUserFavorites.push(favObj);
+                btnElement.classList.add('active');
+            }
+
+            try {
+                await setDoc(doc(db, "users", currentUser.uid), { favorites: windowUserFavorites }, { merge: true });
+            } catch (e) {
+                console.error("Error toggling favorite", e);
             }
         }
     </script>

@@ -473,6 +473,46 @@
             transform: translateY(1px);
         }
 
+        .fav-icon-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(20, 20, 25, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.2s ease;
+        }
+
+        .fav-icon-btn:hover {
+            background: rgba(237, 28, 36, 0.2);
+            transform: scale(1.1);
+        }
+
+        .fav-icon-btn.active {
+            color: #ed1c24;
+        }
+
+        .fav-icon-btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+            fill: none;
+        }
+
+        .fav-icon-btn.active svg {
+            fill: #ed1c24;
+            stroke: #ed1c24;
+            transform: scale(1.1);
+        }
+
         .poster-info {
             display: flex;
             flex-direction: column;
@@ -644,6 +684,7 @@
                 <div class="chart-wrapper">
                     <canvas id="progressChart"></canvas>
                 </div>
+                <div id="statsList" style="margin-top: 20px; width: 100%; display: flex; flex-direction: column; gap: 10px;"></div>
             </div>
         </div>
 
@@ -949,6 +990,18 @@
             } else {
                 initChart(dataCounts, updatedLabels);
             }
+
+            const statsList = document.getElementById('statsList');
+            if (statsList) {
+                statsList.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.95rem;"><span style="color: #eab308; font-weight: 600;">Watching New:</span> <span>${dataCounts[0]}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.95rem;"><span style="color: #fb923c; font-weight: 600;">Watching Another S/M:</span> <span>${dataCounts[1]}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.95rem;"><span style="color: #ef4444; font-weight: 600;">Plan to Watch:</span> <span>${dataCounts[2]}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.95rem;"><span style="color: #6b7280; font-weight: 600;">On Hold:</span> <span>${dataCounts[3]}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.95rem;"><span style="color: #22c55e; font-weight: 600;">Watched:</span> <span>${dataCounts[4]}</span></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 1.05rem; margin-top: 5px; border-top: 1px solid var(--border-glass); padding-top: 10px; font-weight: 700;"><span>Total Titles:</span> <span>${total}</span></div>
+                `;
+            }
         }
 
         function renderItem(item) {
@@ -970,11 +1023,17 @@
             const cleanTitle = item.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
             const onClickHtml = (item.tmdbId && item.mediaType) ? `onclick="window.location.href='details.html?id=${item.tmdbId}&type=${item.mediaType}'" style="cursor: pointer;"` : '';
+            const isFav = windowUserFavorites.some(f => f.title === item.title && f.year == itemYear);
 
             card.innerHTML = `
             <div class="poster-wrapper" ${onClickHtml}>
                 <img src="${imageSrc}" class="poster-image" alt="${cleanTitle}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWIxZDIyIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHdpZHRoPSIzMCIgaGVpZ2h0PSI0MCIgcng9IjQiLz48cGF0aCBkPSJNMTAgMjBsMTAgMTAiLz48cGF0aCBkPSJNMjAgMjBMMTAgMzAiLz48L3N2Zz4='">
                 <div class="platform-tag">${item.platform}</div>
+                <div class="fav-icon-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); window.toggleFavoriteWL('${item.id}', this)" title="Toggle Favorite">
+                    <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </div>
                 <div class="poster-overlay">
                     <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
                         <select class="overlay-select" onchange="event.stopPropagation(); window.updateItem(${item.id}, 'platform', this.value)" onclick="event.stopPropagation()">
@@ -1150,7 +1209,64 @@
                         parentGrid.innerHTML = '<div class="empty-state">No favorites yet</div>';
                     }
                     updateCounts();
+                    // also refresh icons on watchlist items
+                    document.querySelectorAll('.fav-icon-btn').forEach(btn => {
+                        const wrapperCard = btn.closest('.poster-card');
+                        if(wrapperCard && wrapperCard.hasAttribute('data-id')) {
+                            const wId = parseInt(wrapperCard.getAttribute('data-id'));
+                            const item = windowUserWatchlist.find(w => w.id === wId);
+                            if(item) {
+                                const isStillFav = windowUserFavorites.some(f => f.title === item.title && f.year == item.year);
+                                if(!isStillFav) {
+                                    btn.classList.remove('active');
+                                }
+                            }
+                        }
+                    });
                 }, 300);
+            }
+        }
+
+        window.toggleFavoriteWL = async function (idStr, btnElement) {
+            if (!currentUser) {
+                window.location.href = "login.html";
+                return;
+            }
+            const id = parseInt(idStr);
+            const item = windowUserWatchlist.find(x => x.id === id);
+            if (!item) return;
+
+            const existingIndex = windowUserFavorites.findIndex(f => f.title === item.title && f.year == item.year);
+
+            if (existingIndex > -1) {
+                // Remove
+                windowUserFavorites.splice(existingIndex, 1);
+                btnElement.classList.remove('active');
+            } else {
+                // Add
+                const favObj = {
+                    id: Date.now(),
+                    tmdbId: item.tmdbId,
+                    mediaType: item.mediaType,
+                    title: item.title,
+                    image: item.image,
+                    year: item.year
+                };
+                windowUserFavorites.push(favObj);
+                btnElement.classList.add('active');
+            }
+
+            try {
+                await setDoc(doc(db, "users", currentUser.uid), { favorites: windowUserFavorites }, { merge: true });
+                // Refresh favorites section
+                const favContainer = document.getElementById('list-favorites');
+                if (favContainer) {
+                    favContainer.innerHTML = '<div class="empty-state">No favorites yet</div>';
+                    windowUserFavorites.forEach(fav => renderFavoriteItem(fav));
+                }
+                updateCounts();
+            } catch (e) {
+                console.error("Toggle Favorite Error", e);
             }
         }
 
